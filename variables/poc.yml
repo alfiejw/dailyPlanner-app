@@ -1,0 +1,15 @@
+# POC environment specific values.
+variables:
+  environmentCode: 'POC'
+
+  # Placeholder service connection name in Azure DevOps.
+  azureServiceConnection: 'sc-azure-poc-placeholder'
+
+  # Resource group destination for POC deployments.
+  resourceGroupName: 'rg-dailyplanner-poc-uks'
+
+  # Placeholder tenant ID for this environment.
+  tenantId: '00000000-0000-0000-0000-000000000000'
+
+  # Placeholder subscription ID.
+  subscriptionIdPlaceholder: '00000000-0000-0000-0000-000000000000'

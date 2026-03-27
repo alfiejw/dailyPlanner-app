@@ -1,0 +1,9 @@
+# Shared values used in all environments.
+variables:
+  projectName: 'dailyplanner'
+  location: 'uksouth'
+  cosmosDbName: 'plannerdb'
+  cosmosContainerName: 'planner'
+
+  # Keep Free tier for budget-first architecture.
+  staticWebAppSku: 'Free'

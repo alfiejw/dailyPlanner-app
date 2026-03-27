@@ -1,0 +1,21 @@
+{
+  "name": "daily-planner-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "dist/src/functions/**/*.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "func start",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@azure/cosmos": "^4.0.0"
+  },
+  "devDependencies": {
+    "@azure/functions": "^4.5.1",
+    "@types/node": "^22.7.4",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.6.2"
+  }
+}

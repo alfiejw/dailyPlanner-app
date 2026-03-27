@@ -1,0 +1,127 @@
+name: Deploy Infrastructure
+
+on:
+  # Manual trigger mirrors the Azure DevOps trigger:none behavior.
+  workflow_dispatch:
+    inputs:
+      environmentCode:
+        description: Environment Code
+        required: true
+        type: choice
+        options:
+          - POC
+          - DEV
+          - PRD
+        default: POC
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-infra:
+    name: Deploy Bicep Resources
+    runs-on: ubuntu-latest
+
+    # Binding the job to a GitHub Environment lets you scope secrets/approvals.
+    environment: ${{ github.event.inputs.environmentCode }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Resolve Environment Variables
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ENV_CODE="${{ github.event.inputs.environmentCode }}"
+          ENV_CODE_LOWER="${ENV_CODE,,}"
+
+          COMMON_FILE="variables/common.yml"
+          ENV_FILE="variables/${ENV_CODE_LOWER}.yml"
+
+          if [ ! -f "${COMMON_FILE}" ] || [ ! -f "${ENV_FILE}" ]; then
+            echo "Variables files are missing for environment ${ENV_CODE}." >&2
+            exit 1
+          fi
+
+          get_yaml_value() {
+            local key="$1"
+            local file="$2"
+
+            awk -F": " -v key="${key}" '
+              $1 ~ "^[[:space:]]*" key "$" {
+                value=$2
+                gsub(/\"|\047/, "", value)
+                print value
+                exit
+              }
+            ' "${file}"
+          }
+
+          PROJECT_NAME="$(get_yaml_value projectName "${COMMON_FILE}")"
+          LOCATION="$(get_yaml_value location "${COMMON_FILE}")"
+          STATIC_WEB_APP_SKU="$(get_yaml_value staticWebAppSku "${COMMON_FILE}")"
+          COSMOS_DB_NAME="$(get_yaml_value cosmosDbName "${COMMON_FILE}")"
+          COSMOS_CONTAINER_NAME="$(get_yaml_value cosmosContainerName "${COMMON_FILE}")"
+
+          RESOURCE_GROUP_NAME="$(get_yaml_value resourceGroupName "${ENV_FILE}")"
+          TENANT_ID_FROM_FILE="$(get_yaml_value tenantId "${ENV_FILE}")"
+
+          PARAM_FILE="infra/parameters/shared.bicepparam"
+
+          echo "environment_code=${ENV_CODE}" >> "$GITHUB_OUTPUT"
+          echo "environment_code_lower=${ENV_CODE_LOWER}" >> "$GITHUB_OUTPUT"
+          echo "project_name=${PROJECT_NAME}" >> "$GITHUB_OUTPUT"
+          echo "location=${LOCATION}" >> "$GITHUB_OUTPUT"
+          echo "resource_group_name=${RESOURCE_GROUP_NAME}" >> "$GITHUB_OUTPUT"
+          echo "static_web_app_sku=${STATIC_WEB_APP_SKU}" >> "$GITHUB_OUTPUT"
+          echo "cosmos_db_name=${COSMOS_DB_NAME}" >> "$GITHUB_OUTPUT"
+          echo "cosmos_container_name=${COSMOS_CONTAINER_NAME}" >> "$GITHUB_OUTPUT"
+          echo "tenant_id_from_file=${TENANT_ID_FROM_FILE}" >> "$GITHUB_OUTPUT"
+          echo "param_file=${PARAM_FILE}" >> "$GITHUB_OUTPUT"
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          # Create these as GitHub Environment secrets (POC/DEV/PRD) or repository secrets.
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Ensure Resource Group Exists
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+
+            az group create \
+              --name "${{ steps.resolve.outputs.resource_group_name }}" \
+              --location "${{ steps.resolve.outputs.location }}"
+
+      - name: Deploy Main Bicep Template
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+
+            PARAM_TEMPLATE="infra/parameters/shared.bicepparam"
+            PARAM_FILE="infra/parameters/generated.${{ steps.resolve.outputs.environment_code_lower }}.bicepparam"
+
+            cp "${PARAM_TEMPLATE}" "${PARAM_FILE}"
+
+            # Render a deployment-specific bicepparam using values from variable templates.
+            sed -i "s|__ENVIRONMENT_CODE__|${{ steps.resolve.outputs.environment_code }}|g" "${PARAM_FILE}"
+            sed -i "s|__LOCATION__|${{ steps.resolve.outputs.location }}|g" "${PARAM_FILE}"
+            sed -i "s|__PROJECT_NAME__|${{ steps.resolve.outputs.project_name }}|g" "${PARAM_FILE}"
+            sed -i "s|__TENANT_ID__|${{ steps.resolve.outputs.tenant_id_from_file }}|g" "${PARAM_FILE}"
+            sed -i "s|__STATIC_WEB_APP_SKU__|${{ steps.resolve.outputs.static_web_app_sku }}|g" "${PARAM_FILE}"
+            sed -i "s|__COSMOS_DB_NAME__|${{ steps.resolve.outputs.cosmos_db_name }}|g" "${PARAM_FILE}"
+            sed -i "s|__COSMOS_CONTAINER_NAME__|${{ steps.resolve.outputs.cosmos_container_name }}|g" "${PARAM_FILE}"
+
+            az deployment group create \
+              --resource-group "${{ steps.resolve.outputs.resource_group_name }}" \
+              --template-file "infra/main.bicep" \
+              --parameters "${PARAM_FILE}"

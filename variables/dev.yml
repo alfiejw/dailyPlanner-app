@@ -1,0 +1,15 @@
+# DEV environment specific values.
+variables:
+  environmentCode: 'DEV'
+
+  # Placeholder service connection name in Azure DevOps.
+  azureServiceConnection: 'sc-azure-dev-placeholder'
+
+  # Resource group destination for DEV deployments.
+  resourceGroupName: 'rg-dailyplanner-dev-uks'
+
+  # Placeholder tenant ID for this environment.
+  tenantId: '00000000-0000-0000-0000-000000000000'
+
+  # Placeholder subscription ID.
+  subscriptionIdPlaceholder: '00000000-0000-0000-0000-000000000000'

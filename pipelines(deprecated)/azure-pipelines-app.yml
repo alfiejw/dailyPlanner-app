@@ -1,0 +1,63 @@
+# Application pipeline skeleton for frontend + backend build and deploy.
+trigger: none
+pr: none
+
+parameters:
+  # Select one environment code and let the pipeline map the variable file.
+  - name: environmentCode
+    displayName: Environment Code
+    type: string
+    default: POC
+    values:
+      - POC
+      - DEV
+      - PRD
+
+variables:
+  - template: ../variables/common.yml
+  - ${{ if eq(parameters.environmentCode, 'POC') }}:
+    - template: ../variables/poc.yml
+  - ${{ if eq(parameters.environmentCode, 'DEV') }}:
+    - template: ../variables/dev.yml
+  - ${{ if eq(parameters.environmentCode, 'PRD') }}:
+    - template: ../variables/prd.yml
+
+stages:
+  - stage: Build
+    displayName: Build Frontend and Backend
+    jobs:
+      - job: BuildJob
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+
+          # Build frontend assets.
+          - script: |
+              cd frontend
+              npm ci
+              npm run build
+            displayName: Build React Frontend
+
+          # Build backend function code.
+          - script: |
+              cd backend
+              npm ci
+              npm run build
+            displayName: Build Functions Backend
+
+  - stage: Deploy
+    displayName: Deploy Frontend and Backend
+    dependsOn: Build
+    jobs:
+      - job: DeployJob
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+
+          # Placeholder deployment block; update with your preferred deployment method.
+          - script: |
+              echo "TODO: Add deployment commands for SWA and Function App."
+              echo "Environment: ${{ parameters.environmentCode }}"
+            displayName: Placeholder Deploy Step

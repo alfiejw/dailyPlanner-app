@@ -1,0 +1,79 @@
+# Infra deployment pipeline for the planner project.
+trigger: none
+pr: none
+
+parameters:
+  # Select one environment code and let the pipeline map the variable file.
+  - name: environmentCode
+    displayName: Environment Code
+    type: string
+    default: POC
+    values:
+      - POC
+      - DEV
+      - PRD
+
+variables:
+  # Load shared defaults first.
+  - template: ../variables/common.yml
+
+  # Load exactly one environment-specific variable file.
+  - ${{ if eq(parameters.environmentCode, 'POC') }}:
+    - template: ../variables/poc.yml
+  - ${{ if eq(parameters.environmentCode, 'DEV') }}:
+    - template: ../variables/dev.yml
+  - ${{ if eq(parameters.environmentCode, 'PRD') }}:
+    - template: ../variables/prd.yml
+
+stages:
+  - stage: DeployInfra
+    displayName: Deploy Infrastructure
+    jobs:
+      - job: DeployBicep
+        displayName: Deploy Bicep Resources
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+
+          # Ensure the target resource group exists before template deployment.
+          - task: AzureCLI@2
+            displayName: Ensure Resource Group
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                az group create \
+                  --name "$(resourceGroupName)" \
+                  --location "$(location)"
+
+          # Deploy one shared template with environment-specific parameters.
+          - task: AzureCLI@2
+            displayName: Deploy Main Bicep Template
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+
+                PARAM_TEMPLATE="$(Build.SourcesDirectory)/infra/parameters/shared.bicepparam"
+                PARAM_FILE="$(Build.ArtifactStagingDirectory)/generated.bicepparam"
+
+                cp "${PARAM_TEMPLATE}" "${PARAM_FILE}"
+
+                # Render a deployment-specific bicepparam using values from variable templates.
+                sed -i "s|__ENVIRONMENT_CODE__|$(environmentCode)|g" "${PARAM_FILE}"
+                sed -i "s|__LOCATION__|$(location)|g" "${PARAM_FILE}"
+                sed -i "s|__PROJECT_NAME__|$(projectName)|g" "${PARAM_FILE}"
+                sed -i "s|__TENANT_ID__|$(tenantId)|g" "${PARAM_FILE}"
+                sed -i "s|__STATIC_WEB_APP_SKU__|$(staticWebAppSku)|g" "${PARAM_FILE}"
+                sed -i "s|__COSMOS_DB_NAME__|$(cosmosDbName)|g" "${PARAM_FILE}"
+                sed -i "s|__COSMOS_CONTAINER_NAME__|$(cosmosContainerName)|g" "${PARAM_FILE}"
+
+                az deployment group create \
+                  --resource-group "$(resourceGroupName)" \
+                  --template-file "$(Build.SourcesDirectory)/infra/main.bicep" \
+                  --parameters "${PARAM_FILE}"

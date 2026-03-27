@@ -1,0 +1,236 @@
+/* Theme tokens keep color and spacing consistent across all views. */
+:root {
+  --ink: #1f2430;
+  --ink-muted: #556176;
+  --surface: #ffffffd4;
+  --surface-strong: #ffffff;
+  --line: #cfd7e6;
+  --accent: #ea7a1f;
+  --accent-soft: #ffd6b5;
+  --high: #ce3e39;
+  --medium: #e6a400;
+  --low: #2f8f58;
+  --shadow: 0 20px 45px rgba(10, 24, 50, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 15% 10%, #ffe5c8, transparent 33%),
+    radial-gradient(circle at 84% 14%, #d8ecff, transparent 28%),
+    linear-gradient(160deg, #f5f9ff 0%, #fffaf2 100%);
+  min-height: 100vh;
+}
+
+.layout {
+  width: min(1180px, calc(100% - 2rem));
+  margin: 1.2rem auto 2.4rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(120deg, #fff8ec, #eef6ff);
+  border: 1px solid #f0e4d5;
+  border-radius: 20px;
+  padding: 1.2rem;
+  box-shadow: var(--shadow);
+}
+
+.hero h1 {
+  margin: 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 700;
+}
+
+.hero p {
+  margin: 0.35rem 0 0;
+  color: var(--ink-muted);
+}
+
+.week-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.5rem 0.7rem;
+  background: var(--surface-strong);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.45rem 0.75rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+.view-tabs {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.view-tabs .active {
+  background: var(--accent-soft);
+  border-color: #f1b072;
+}
+
+.content-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.task-composer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+}
+
+.task-composer input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid #edf0f7;
+  border-radius: 16px;
+  padding: 1rem;
+  backdrop-filter: blur(2px);
+}
+
+.panel h2,
+.panel h3,
+.panel h4 {
+  margin-top: 0;
+}
+
+.habit-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.habit-table th,
+.habit-table td {
+  border-bottom: 1px solid #e8edf5;
+  padding: 0.45rem;
+  text-align: left;
+}
+
+.progress-shell {
+  margin: 0.7rem 0 0.9rem;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+}
+
+.progress-track {
+  height: 10px;
+  background: #e9eff9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f79f45, #ea7a1f);
+}
+
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.task-list li {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  gap: 0.5rem;
+  align-items: center;
+  border: 1px solid #ecf1f9;
+  border-radius: 10px;
+  padding: 0.45rem 0.55rem;
+  background: #fff;
+}
+
+.task-list.compact li {
+  grid-template-columns: auto 1fr auto;
+}
+
+.priority-chip {
+  font-size: 0.75rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.45rem;
+  color: #fff;
+}
+
+.priority-high {
+  background: var(--high);
+}
+
+.priority-medium {
+  background: var(--medium);
+  color: #242424;
+}
+
+.priority-low {
+  background: var(--low);
+}
+
+.daily-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.focus-box {
+  border: 1px dashed #d6deec;
+  border-radius: 12px;
+  padding: 0.7rem;
+  margin-bottom: 0.8rem;
+  background: #fff;
+}
+
+.daily-header {
+  margin-bottom: 0.7rem;
+}
+
+/* Mobile layout keeps interactions clear and readable. */
+@media (max-width: 900px) {
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .daily-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .task-list li {
+    grid-template-columns: auto 1fr;
+  }
+}

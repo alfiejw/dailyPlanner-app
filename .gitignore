@@ -1,0 +1,21 @@
+# Node and frontend build artifacts
+node_modules/
+dist/
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment and local-only files
+.env
+.env.local
+.env.*.local
+backend/local.settings.json
+
+# OS and editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/*.code-workspace
