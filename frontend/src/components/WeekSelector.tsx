@@ -11,9 +11,11 @@ export function WeekSelector({ weekStart, onShiftWeek }: WeekSelectorProps) {
   return (
     <section className="week-selector">
       <button onClick={() => onShiftWeek(-7)} aria-label="Previous week">Previous</button>
-      <div>
-        <strong>{formatHumanDate(dates[0])}</strong>
-        <span> to </span>
+      <div className="week-range">
+        <span className="week-range-start">
+          <strong>{formatHumanDate(dates[0])}</strong>
+          <span className="week-range-to"> to</span>
+        </span>
         <strong>{formatHumanDate(dates[6])}</strong>
       </div>
       <button onClick={() => onShiftWeek(7)} aria-label="Next week">Next</button>

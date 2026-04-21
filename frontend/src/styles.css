@@ -318,6 +318,32 @@ body[data-theme="light"] .theme-toggle {
   flex-wrap: wrap;
 }
 
+.view-tab {
+  min-width: 0;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.view-tab-label {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .view-shell {
   --view-accent: var(--weekly-accent);
   --view-soft: var(--weekly-soft);
@@ -584,13 +610,51 @@ body[data-theme="light"] .view-pane {
 .habit-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .habit-table th,
 .habit-table td {
   border-bottom: 1px solid var(--line);
   padding: 0.45rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* Habit column takes remaining space; day columns are equal and wide enough for "Wednesday". */
+.habit-table th:first-child,
+.habit-table td:first-child {
+  width: calc(100% - 7 * 6.8rem);
   text-align: left;
+  min-width: 5rem;
+}
+
+.habit-table th:not(:first-child),
+.habit-table td:not(:first-child) {
+  width: 6.8rem;
+}
+
+/* Show only the longest label that fits at each breakpoint. */
+.day-label-three,
+.day-label-two,
+.day-label-one {
+  display: none;
+}
+
+.week-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.25em;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.week-range-start {
+  white-space: nowrap;
+}
+
+.week-range-to {
+  margin-right: 0.25em;
 }
 
 .progress-shell {
@@ -699,18 +763,98 @@ body[data-theme="light"] .progress-track {
   }
 
   .view-tabs {
-    gap: 0.45rem;
+    gap: 0.35rem;
+    flex-wrap: nowrap;
   }
 
   .view-tab {
-    flex: 1 1 calc(50% - 0.45rem);
+    flex: 1 1 0;
+    padding-inline: 0.35rem;
+    font-size: 0.8rem;
+  }
+
+  .view-tab-label {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.1rem;
   }
 
   .view-tab.settings {
     margin-left: 0;
   }
 
+  .habit-table {
+    font-size: 0.82rem;
+  }
+
+  .habit-table th,
+  .habit-table td {
+    padding: 0.3rem 0.2rem;
+  }
+
+  /* On narrow screens cascade: hide long → show three-letter */
+  .day-label-long {
+    display: none;
+  }
+
+  .day-label-three {
+    display: inline;
+  }
+
+  /* Recalc column widths for three-letter names */
+  .habit-table th:first-child,
+  .habit-table td:first-child {
+    width: calc(100% - 7 * 2.8rem);
+  }
+
+  .habit-table th:not(:first-child),
+  .habit-table td:not(:first-child) {
+    width: 2.8rem;
+  }
+
   .task-list li {
     grid-template-columns: auto 1fr;
+  }
+}
+
+/* Very narrow: switch to two-letter names */
+@media (max-width: 420px) {
+  .day-label-three {
+    display: none;
+  }
+
+  .day-label-two {
+    display: inline;
+  }
+
+  .habit-table th:first-child,
+  .habit-table td:first-child {
+    width: calc(100% - 7 * 2rem);
+  }
+
+  .habit-table th:not(:first-child),
+  .habit-table td:not(:first-child) {
+    width: 2rem;
+  }
+}
+
+/* Extremely narrow: single-letter names */
+@media (max-width: 320px) {
+  .day-label-two {
+    display: none;
+  }
+
+  .day-label-one {
+    display: inline;
+  }
+
+  .habit-table th:first-child,
+  .habit-table td:first-child {
+    width: calc(100% - 7 * 1.4rem);
+  }
+
+  .habit-table th:not(:first-child),
+  .habit-table td:not(:first-child) {
+    width: 1.4rem;
   }
 }
