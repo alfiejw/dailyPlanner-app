@@ -1,0 +1,1 @@
+{"root":["./src/vite-env.d.ts","./src/api/client.ts","./src/lib/date.ts","./src/types/planner.ts","./src/app.tsx","./src/main.tsx","./src/components/dailyboardview.tsx","./src/components/progressbar.tsx","./src/components/taskcomposer.tsx","./src/components/weekselector.tsx","./src/components/weeklyhabitsview.tsx","./src/components/weeklytodoview.tsx"],"version":"5.9.3"}
