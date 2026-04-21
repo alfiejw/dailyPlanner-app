@@ -270,6 +270,7 @@ body[data-theme="light"][data-light-base="violet"] {
   border-radius: 14px;
   padding: 0.5rem 0.7rem;
   background: var(--surface-strong);
+  width: 18rem;
 }
 
 .week-selector > button {
@@ -280,6 +281,7 @@ body[data-theme="light"][data-light-base="violet"] {
   );
   border-color: color-mix(in srgb, var(--current-view-accent) 66%, var(--line));
   color: var(--ink);
+  -webkit-text-stroke: 0.08em currentColor;
 }
 
 .week-selector > button:hover {
@@ -643,10 +645,12 @@ body[data-theme="light"] .view-pane {
 
 .week-range {
   display: flex;
+  flex: 1;
   flex-wrap: wrap;
   gap: 0 0.25em;
   align-items: baseline;
   justify-content: center;
+  text-align: center;
 }
 
 .week-range-start {
@@ -756,6 +760,7 @@ body[data-theme="light"] .progress-track {
   .hero-controls {
     width: 100%;
     flex-wrap: wrap;
+    justify-content: center;
   }
 
   .daily-grid {
