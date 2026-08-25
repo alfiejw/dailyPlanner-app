@@ -577,10 +577,19 @@
     }
     .notes-textarea:focus { border-color: var(--secondary); }
 
+    /* ── Backup actions row ───────────────────────────────────────────── */
+    .backup-actions {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 48px;
+      margin: 1em 0;
+    }
+
     /* ── Footer ───────────────────────────────────────────────────────── */
     .app-footer {
       text-align: center;
-      padding: 0 16px 20px;
+      padding: 1em 16px 20px;
       font-size: 0.68rem;
       color: var(--text-muted);
     }
@@ -726,7 +735,7 @@
   </div>
 
   <footer class="app-footer">
-    <span>Daily Planner v0.1 &nbsp;<span class="network-badge" id="network-badge"></span></span>
+    <span>Daily Planner v<span id="ver"></span> &nbsp;<span class="network-badge" id="network-badge"></span></span>
   </footer>
 
   <script>
@@ -774,7 +783,7 @@
     // ── Storage ───────────────────────────────────────────────────────────────
 
     const STORAGE_KEY  = 'plannerData';
-    const APP_VERSION  = '0.1';
+    const APP_VERSION  = '0.1.1';
 
     function loadAll() {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -1277,6 +1286,7 @@
 
     render();
     updateNetworkBadge();
+    document.getElementById('ver').textContent = APP_VERSION;
     navigator.storage?.persist?.();
 
     if ('serviceWorker' in navigator) {
