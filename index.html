@@ -405,7 +405,40 @@
       transition: all 0.15s;
     }
     .btn-ghost:hover { background: #fdeaea; color: var(--primary); border-color: var(--primary); }
+    .btn-reorder {
+      background: none;
+      border: 1px solid #c8adb0;
+      border-radius: 6px;
+      color: #b09090;
+      font-family: inherit;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-reorder:hover { background: #fdeaea; color: var(--primary); border-color: var(--primary); }
+    .btn-reorder.active { background: var(--secondary); color: #fff; border-color: var(--secondary); }
 
+    .drag-handle {
+      font-size: 1rem;
+      cursor: grab;
+      padding: 2px 2px;
+      color: #b09090;
+      flex-shrink: 0;
+      touch-action: none;
+      user-select: none;
+    }
+    .drag-handle:active { cursor: grabbing; color: var(--secondary); }
+    .task-item.reorder-dragging { opacity: 0.4; }
+    .task-item.drag-target-above { box-shadow: 0 -2px 0 var(--secondary); }
+    .task-item.drag-target-below { box-shadow: 0  2px 0 var(--secondary); }
+
+    .priority-divider {
+      list-style: none;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      margin: 2px 6px;
+    }
     /* ── Notes ────────────────────────────────────────────────────────── */
     .notes-textarea {
       width: 100%;
@@ -501,7 +534,10 @@
     <div class="card">
       <div class="card-header-row">
         <div class="card-title">Tasks</div>
-        <button class="btn-ghost" id="clear-done-btn">Clear done</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn-reorder" id="reorder-btn">Reorder &#9776;</button>
+          <button class="btn-ghost" id="clear-done-btn">Clear done &#128465;</button>
+        </div>
       </div>
       <ul class="task-list" id="task-list" aria-label="Task list">
         <li class="empty-state" id="empty-msg">No tasks yet — add one above!</li>
@@ -666,10 +702,10 @@
     const PRIORITY_ORDER = { high: 0, normal: 1, low: 2 };
 
     function renderTasks(tasks) {
-      const sorted = [...tasks].sort((a, b) => {
-        const pd = (PRIORITY_ORDER[a.priority] ?? 1) - (PRIORITY_ORDER[b.priority] ?? 1);
-        return pd !== 0 ? pd : a.id - b.id;
-      });
+      // Stable sort preserves user-defined array order within each priority group
+      const sorted = [...tasks].sort((a, b) =>
+        (PRIORITY_ORDER[a.priority] ?? 1) - (PRIORITY_ORDER[b.priority] ?? 1)
+      );
       tasks = sorted;
       const list  = document.getElementById('task-list');
       const fill  = document.getElementById('progress-fill');
@@ -696,15 +732,35 @@
       bar.setAttribute('aria-valuenow', pct);
       label.textContent = `${done} / ${tasks.length}`;
 
+      let prevPriority = null;
       tasks.forEach(task => {
+        if (prevPriority !== null && task.priority !== prevPriority) {
+          const div = document.createElement('li');
+          div.className = 'priority-divider';
+          list.appendChild(div);
+        }
+        prevPriority = task.priority;
+
         const li = document.createElement('li');
         li.className = 'task-item' + (task.done ? ' done' : '');
+        li.dataset.id = task.id;
 
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.checked = task.done;
-        cb.setAttribute('aria-label', `Mark "${task.text}" as ${task.done ? 'not done' : 'done'}`);
-        cb.addEventListener('change', () => toggleTask(task.id));
+        let firstEl;
+        if (reorderMode) {
+          const handle = document.createElement('span');
+          handle.className = 'drag-handle';
+          handle.textContent = '\u2630';
+          handle.setAttribute('aria-label', 'Hold to reorder');
+          handle.addEventListener('pointerdown', e => { e.preventDefault(); startDrag(task.id); });
+          firstEl = handle;
+        } else {
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = task.done;
+          cb.setAttribute('aria-label', `Mark "${task.text}" as ${task.done ? 'not done' : 'done'}`);
+          cb.addEventListener('change', () => toggleTask(task.id));
+          firstEl = cb;
+        }
 
         const span = document.createElement('span');
         span.className = 'task-text';
@@ -738,9 +794,9 @@
           } else {
             bubble.append(tEl, dEl);
           }
-          li.append(cb, span, bubble, badge, editBtn);
+          li.append(firstEl, span, bubble, badge, editBtn);
         } else {
-          li.append(cb, span, badge, editBtn);
+          li.append(firstEl, span, badge, editBtn);
         }
         list.appendChild(li);
       });
@@ -749,6 +805,78 @@
     // ── Task actions ──────────────────────────────────────────────────────────
 
     let pendingDue = '';
+
+    let reorderMode = false;
+    let dragId      = null;
+    let dragOverId  = null;
+    let dragEl      = null;
+    let dragBefore  = false;
+
+    function toggleReorder() {
+      reorderMode = !reorderMode;
+      document.getElementById('reorder-btn').classList.toggle('active', reorderMode);
+      renderTasks(getDayData(toKey(currentDate)).tasks);
+    }
+
+    function startDrag(id) {
+      dragId = id;
+      dragEl = document.querySelector(`.task-item[data-id="${id}"]`);
+      if (!dragEl) return;
+      dragEl.classList.add('reorder-dragging');
+      document.addEventListener('pointermove', onDragMove, { passive: false });
+      document.addEventListener('pointerup', onDragEnd);
+    }
+
+    function onDragMove(e) {
+      e.preventDefault();
+      if (!dragId || !dragEl) return;
+
+      dragEl.style.visibility = 'hidden';
+      const under = document.elementFromPoint(e.clientX, e.clientY);
+      dragEl.style.visibility = '';
+
+      document.querySelectorAll('.drag-target-above, .drag-target-below')
+        .forEach(el => el.classList.remove('drag-target-above', 'drag-target-below'));
+
+      const targetLi = under?.closest('.task-item[data-id]');
+      if (!targetLi || targetLi === dragEl) return;
+
+      const targetId = Number(targetLi.dataset.id);
+      const day = getDayData(toKey(currentDate));
+      const dragTask   = day.tasks.find(t => t.id === dragId);
+      const targetTask = day.tasks.find(t => t.id === targetId);
+      if (!dragTask || !targetTask || dragTask.priority !== targetTask.priority) return;
+
+      const rect = targetLi.getBoundingClientRect();
+      dragBefore = e.clientY < rect.top + rect.height / 2;
+      dragOverId = targetId;
+      targetLi.classList.add(dragBefore ? 'drag-target-above' : 'drag-target-below');
+    }
+
+    function onDragEnd() {
+      document.removeEventListener('pointermove', onDragMove);
+      document.removeEventListener('pointerup', onDragEnd);
+
+      if (dragId && dragOverId && dragId !== dragOverId) {
+        const key   = toKey(currentDate);
+        const day   = getDayData(key);
+        const tasks = day.tasks;
+        const fromIdx = tasks.findIndex(t => t.id === dragId);
+        let   toIdx   = tasks.findIndex(t => t.id === dragOverId);
+        if (fromIdx !== -1 && toIdx !== -1 &&
+            tasks[fromIdx].priority === tasks[toIdx].priority) {
+          const [moved] = tasks.splice(fromIdx, 1);
+          toIdx = tasks.findIndex(t => t.id === dragOverId);
+          tasks.splice(dragBefore ? toIdx : toIdx + 1, 0, moved);
+          saveDayData(key, day);
+        }
+      }
+
+      document.querySelectorAll('.reorder-dragging, .drag-target-above, .drag-target-below')
+        .forEach(el => el.classList.remove('reorder-dragging', 'drag-target-above', 'drag-target-below'));
+      dragId = dragOverId = dragEl = null;
+      renderTasks(getDayData(toKey(currentDate)).tasks);
+    }
 
     function updateDueDisplay() {
       const preview = document.getElementById('due-preview');
@@ -912,6 +1040,7 @@
       currentDate = new Date();
       render();
     });
+    document.getElementById('reorder-btn').addEventListener('click', toggleReorder);
     document.getElementById('clear-done-btn').addEventListener('click', clearDone);
 
     document.getElementById('edit-save-btn').addEventListener('click', saveEdit);
