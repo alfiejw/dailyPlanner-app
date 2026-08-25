@@ -349,11 +349,14 @@
       font-size: 0.78rem;
       font-weight: 600;
       color: var(--text);
+      cursor: pointer;
     }
+    .due-preview:hover { opacity: 0.8; }
     .due-preview-date { font-weight: 400; color: var(--text-muted); }
     .btn-remove-due {
       background: none;
-      border: none;
+      border: 1px solid #c0a8aa;
+      border-radius: 6px;
       color: #b09090;
       font-family: inherit;
       font-size: 0.65rem;
@@ -361,10 +364,10 @@
       letter-spacing: 0.05em;
       text-transform: uppercase;
       cursor: pointer;
-      padding: 0 2px;
-      transition: color 0.15s;
+      padding: 2px 8px;
+      transition: all 0.15s;
     }
-    .btn-remove-due:hover { color: var(--primary); }
+    .btn-remove-due:hover { background: #fdeaea; color: var(--primary); border-color: var(--primary); }
 
     .btn-delete {
       background: none;
@@ -646,11 +649,11 @@
       </div>
       <div class="composer-due-row">
         <button class="btn-due" id="open-due-btn" aria-label="Set due date and time">+ DUE</button>
-        <div class="due-preview" id="due-preview" style="display:none">
+        <div class="due-preview" id="due-preview" role="button" tabindex="0" aria-label="Edit due date" style="display:none">
           <span id="due-preview-time"></span>
           <span class="due-preview-date" id="due-preview-date"></span>
-          <button class="btn-remove-due" id="remove-due-btn" aria-label="Remove due date">Remove</button>
         </div>
+        <button class="btn-remove-due" id="remove-due-btn" aria-label="Remove due date" style="display:none">Remove</button>
       </div>
       <input type="datetime-local" id="due-picker" aria-label="Due date and time"
         style="position:fixed;opacity:0;pointer-events:none;width:0;height:0" />
@@ -701,11 +704,11 @@
       </div>
       <div class="composer-due-row">
         <button class="btn-due" id="edit-open-due-btn" aria-label="Set due date and time">+ DUE</button>
-        <div class="due-preview" id="edit-due-preview" style="display:none">
+        <div class="due-preview" id="edit-due-preview" role="button" tabindex="0" aria-label="Edit due date" style="display:none">
           <span id="edit-due-time"></span>
           <span class="due-preview-date" id="edit-due-date"></span>
-          <button class="btn-remove-due" id="edit-remove-due-btn" aria-label="Remove due date">Remove</button>
         </div>
+        <button class="btn-remove-due" id="edit-remove-due-btn" aria-label="Remove due date" style="display:none">Remove</button>
       </div>
       <input type="datetime-local" id="edit-due-picker"
         style="position:fixed;opacity:0;pointer-events:none;width:0;height:0" />
@@ -1009,16 +1012,19 @@
     }
 
     function updateDueDisplay() {
-      const preview = document.getElementById('due-preview');
-      const openBtn = document.getElementById('open-due-btn');
+      const preview   = document.getElementById('due-preview');
+      const openBtn   = document.getElementById('open-due-btn');
+      const removeBtn = document.getElementById('remove-due-btn');
       if (pendingDue) {
-        openBtn.style.display = 'none';
-        preview.style.display = 'flex';
+        openBtn.style.display   = 'none';
+        preview.style.display   = 'flex';
+        removeBtn.style.display = '';
         document.getElementById('due-preview-time').textContent = formatDueTime(pendingDue);
         document.getElementById('due-preview-date').textContent = formatDueDate(pendingDue);
       } else {
-        openBtn.style.display = '';
-        preview.style.display = 'none';
+        openBtn.style.display   = '';
+        preview.style.display   = 'none';
+        removeBtn.style.display = 'none';
       }
     }
 
@@ -1076,16 +1082,19 @@
     let editingDue    = '';
 
     function updateEditDueDisplay() {
-      const preview = document.getElementById('edit-due-preview');
-      const openBtn = document.getElementById('edit-open-due-btn');
+      const preview   = document.getElementById('edit-due-preview');
+      const openBtn   = document.getElementById('edit-open-due-btn');
+      const removeBtn = document.getElementById('edit-remove-due-btn');
       if (editingDue) {
-        openBtn.style.display = 'none';
-        preview.style.display = 'flex';
+        openBtn.style.display   = 'none';
+        preview.style.display   = 'flex';
+        removeBtn.style.display = '';
         document.getElementById('edit-due-time').textContent = formatDueTime(editingDue);
         document.getElementById('edit-due-date').textContent = formatDueDate(editingDue);
       } else {
-        openBtn.style.display = '';
-        preview.style.display = 'none';
+        openBtn.style.display   = '';
+        preview.style.display   = 'none';
+        removeBtn.style.display = 'none';
       }
     }
 
@@ -1178,6 +1187,9 @@
     document.getElementById('edit-delete-btn').addEventListener('click', deleteFromEditor);
 
     const editDuePicker = document.getElementById('edit-due-picker');
+    document.getElementById('edit-due-preview').addEventListener('click', () => {
+      editDuePicker.showPicker?.() || editDuePicker.click();
+    });
     document.getElementById('edit-open-due-btn').addEventListener('click', () => {
       const now = new Date();
       now.setMinutes(Math.ceil((now.getMinutes() + 1) / 30) * 30, 0, 0);
@@ -1200,8 +1212,11 @@
     });
 
     const duePicker = document.getElementById('due-picker');
+    document.getElementById('due-preview').addEventListener('click', () => {
+      duePicker.showPicker?.() || duePicker.click();
+    });
     document.getElementById('open-due-btn').addEventListener('click', () => {
-      // Always pre-fill so confirming without editing still sets the value
+      // Always pre-fill so confirming without editing still commits the value
       const now = new Date();
       now.setMinutes(Math.ceil((now.getMinutes() + 1) / 30) * 30, 0, 0);
       const pad = n => String(n).padStart(2, '0');
@@ -1209,6 +1224,7 @@
         duePicker.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
       }
       pendingDue = duePicker.value;
+      updateDueDisplay();
       duePicker.showPicker?.() || duePicker.click();
     });
     duePicker.addEventListener('change', () => {
