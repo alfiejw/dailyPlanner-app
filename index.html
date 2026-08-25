@@ -427,6 +427,112 @@
     .btn-reorder:hover { background: #fdeaea; color: var(--primary); border-color: var(--primary); }
     .btn-reorder.active { background: var(--secondary); color: #fff; border-color: var(--secondary); }
 
+    .btn-edit {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      opacity: 0.6;
+      transition: opacity 0.15s;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .btn-edit:hover { opacity: 1; }
+    .btn-edit-icon { display: inline-block; font-size: 1rem; transform: scaleY(-1); }
+
+    /* ── Edit modal ────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    }
+    .modal-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--primary);
+    }
+    .modal-text-input {
+      width: 100%;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .modal-text-input:focus { border-color: var(--primary); }
+    .modal-row { display: flex; align-items: center; gap: 10px; }
+    .modal-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .modal-select {
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: var(--card);
+      outline: none;
+      cursor: pointer;
+    }
+    .modal-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 4px; }
+    .btn-modal-delete {
+      background: none;
+      border: 1px solid #c04040;
+      border-radius: 6px;
+      color: #b03030;
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 6px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-modal-delete:hover { background: #ffeaea; }
+    .btn-modal-save {
+      background: none;
+      border: 1px solid var(--secondary);
+      border-radius: 6px;
+      color: var(--secondary);
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 6px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-modal-save:hover { background: #e6eeea; }
+
     .drag-handle {
       font-size: 1rem;
       cursor: grab;
@@ -438,8 +544,14 @@
     }
     .drag-handle:active { cursor: grabbing; color: var(--secondary); }
     .task-item.reorder-dragging { opacity: 0.4; }
-    .task-item.drag-target-above { box-shadow: 0 -2px 0 var(--secondary); }
-    .task-item.drag-target-below { box-shadow: 0  2px 0 var(--secondary); }
+    .drag-insert-line {
+      list-style: none;
+      height: 3px;
+      background: var(--secondary);
+      border-radius: 2px;
+      margin: 0 4px;
+      pointer-events: none;
+    }
 
     .priority-divider {
       list-style: none;
@@ -786,7 +898,7 @@
 
         const editBtn = document.createElement('button');
         editBtn.className = 'btn-edit';
-        editBtn.textContent = '\u270F\uFE0F';
+        editBtn.innerHTML = '<span class="btn-edit-icon">&#x270E;</span>';
         editBtn.setAttribute('aria-label', `Edit task: ${task.text}`);
         editBtn.addEventListener('click', () => openEditor(task.id));
 
@@ -848,8 +960,8 @@
       const under = document.elementFromPoint(e.clientX, e.clientY);
       dragEl.style.visibility = '';
 
-      document.querySelectorAll('.drag-target-above, .drag-target-below')
-        .forEach(el => el.classList.remove('drag-target-above', 'drag-target-below'));
+      // Remove any existing insert line
+      document.querySelectorAll('.drag-insert-line').forEach(el => el.remove());
 
       const targetLi = under?.closest('.task-item[data-id]');
       if (!targetLi || targetLi === dragEl) return;
@@ -863,7 +975,10 @@
       const rect = targetLi.getBoundingClientRect();
       dragBefore = e.clientY < rect.top + rect.height / 2;
       dragOverId = targetId;
-      targetLi.classList.add(dragBefore ? 'drag-target-above' : 'drag-target-below');
+
+      const line = document.createElement('li');
+      line.className = 'drag-insert-line';
+      targetLi.parentNode.insertBefore(line, dragBefore ? targetLi : targetLi.nextSibling);
     }
 
     function onDragEnd() {
@@ -885,8 +1000,9 @@
         }
       }
 
-      document.querySelectorAll('.reorder-dragging, .drag-target-above, .drag-target-below')
-        .forEach(el => el.classList.remove('reorder-dragging', 'drag-target-above', 'drag-target-below'));
+      document.querySelectorAll('.drag-insert-line').forEach(el => el.remove());
+      document.querySelectorAll('.reorder-dragging')
+        .forEach(el => el.classList.remove('reorder-dragging'));
       dragId = dragOverId = dragEl = null;
       renderTasks(getDayData(toKey(currentDate)).tasks);
     }
@@ -1058,9 +1174,6 @@
 
     document.getElementById('edit-save-btn').addEventListener('click', saveEdit);
     document.getElementById('edit-delete-btn').addEventListener('click', deleteFromEditor);
-    document.getElementById('edit-modal').addEventListener('click', e => {
-      if (e.target === document.getElementById('edit-modal')) closeEditor();
-    });
 
     const editDuePicker = document.getElementById('edit-due-picker');
     document.getElementById('edit-open-due-btn').addEventListener('click', () => {
