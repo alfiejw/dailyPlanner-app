@@ -523,6 +523,37 @@
 
   </main>
 
+  <!-- Edit task modal -->
+  <div class="modal-overlay hidden" id="edit-modal" role="dialog" aria-modal="true" aria-label="Edit task">
+    <div class="modal-card">
+      <div class="modal-title">Edit Task</div>
+      <input type="text" class="modal-text-input" id="edit-task-input"
+        maxlength="200" autocomplete="off" aria-label="Task title" />
+      <div class="modal-row">
+        <span class="modal-label">Priority</span>
+        <select class="modal-select" id="edit-priority-select" aria-label="Priority">
+          <option value="high">&#9650; High</option>
+          <option value="normal" selected>Normal</option>
+          <option value="low">&#9660; Low</option>
+        </select>
+      </div>
+      <div class="composer-due-row">
+        <button class="btn-due" id="edit-open-due-btn" aria-label="Set due date and time">+ DUE</button>
+        <div class="due-preview" id="edit-due-preview" style="display:none">
+          <span id="edit-due-time"></span>
+          <span class="due-preview-date" id="edit-due-date"></span>
+          <button class="btn-remove-due" id="edit-remove-due-btn" aria-label="Remove due date">Remove</button>
+        </div>
+      </div>
+      <input type="datetime-local" id="edit-due-picker"
+        style="position:fixed;opacity:0;pointer-events:none;width:0;height:0" />
+      <div class="modal-footer">
+        <button class="btn-modal-delete" id="edit-delete-btn">Delete</button>
+        <button class="btn-modal-save" id="edit-save-btn">Save</button>
+      </div>
+    </div>
+  </div>
+
   <footer class="app-footer">Daily Planner &middot; works offline</footer>
 
   <script>
@@ -684,11 +715,11 @@
         badge.className = `priority-badge p-${p}`;
         badge.textContent = p === 'normal' ? 'NORM' : p;
 
-        const del = document.createElement('button');
-        del.className = 'btn-delete';
-        del.innerHTML = '&times;';
-        del.setAttribute('aria-label', `Delete task: ${task.text}`);
-        del.addEventListener('click', () => deleteTask(task.id));
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn-edit';
+        editBtn.textContent = '\u270F\uFE0F';
+        editBtn.setAttribute('aria-label', `Edit task: ${task.text}`);
+        editBtn.addEventListener('click', () => openEditor(task.id));
 
         if (task.due) {
           const now = new Date();
@@ -707,9 +738,9 @@
           } else {
             bubble.append(tEl, dEl);
           }
-          li.append(cb, span, bubble, badge, del);
+          li.append(cb, span, bubble, badge, editBtn);
         } else {
-          li.append(cb, span, badge, del);
+          li.append(cb, span, badge, editBtn);
         }
         list.appendChild(li);
       });
@@ -780,6 +811,66 @@
       renderTasks(day.tasks);
     }
 
+    // ── Task editor ────────────────────────────────────────────────────────────
+
+    let editingTaskId = null;
+    let editingDue    = '';
+
+    function updateEditDueDisplay() {
+      const preview = document.getElementById('edit-due-preview');
+      const openBtn = document.getElementById('edit-open-due-btn');
+      if (editingDue) {
+        openBtn.style.display = 'none';
+        preview.style.display = 'flex';
+        document.getElementById('edit-due-time').textContent = formatDueTime(editingDue);
+        document.getElementById('edit-due-date').textContent = formatDueDate(editingDue);
+      } else {
+        openBtn.style.display = '';
+        preview.style.display = 'none';
+      }
+    }
+
+    function openEditor(id) {
+      const day = getDayData(toKey(currentDate));
+      const task = day.tasks.find(t => t.id === id);
+      if (!task) return;
+      editingTaskId = id;
+      editingDue = task.due || '';
+      document.getElementById('edit-task-input').value = task.text;
+      document.getElementById('edit-priority-select').value = task.priority || 'normal';
+      document.getElementById('edit-due-picker').value = editingDue;
+      updateEditDueDisplay();
+      document.getElementById('edit-modal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('edit-task-input').focus(), 50);
+    }
+
+    function closeEditor() {
+      document.getElementById('edit-modal').classList.add('hidden');
+      editingTaskId = null;
+      editingDue = '';
+    }
+
+    function saveEdit() {
+      const text = document.getElementById('edit-task-input').value.trim();
+      if (!text || !editingTaskId) return;
+      const key = toKey(currentDate);
+      const day = getDayData(key);
+      const task = day.tasks.find(t => t.id === editingTaskId);
+      if (!task) return;
+      task.text = text;
+      task.priority = document.getElementById('edit-priority-select').value;
+      task.due = editingDue || null;
+      saveDayData(key, day);
+      closeEditor();
+      render();
+    }
+
+    function deleteFromEditor() {
+      if (!editingTaskId) return;
+      deleteTask(editingTaskId);
+      closeEditor();
+    }
+
     // ── Notes autosave ────────────────────────────────────────────────────────
 
     let notesTimer;
@@ -822,6 +913,34 @@
       render();
     });
     document.getElementById('clear-done-btn').addEventListener('click', clearDone);
+
+    document.getElementById('edit-save-btn').addEventListener('click', saveEdit);
+    document.getElementById('edit-delete-btn').addEventListener('click', deleteFromEditor);
+    document.getElementById('edit-modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('edit-modal')) closeEditor();
+    });
+
+    const editDuePicker = document.getElementById('edit-due-picker');
+    document.getElementById('edit-open-due-btn').addEventListener('click', () => {
+      const now = new Date();
+      now.setMinutes(Math.ceil((now.getMinutes() + 1) / 30) * 30, 0, 0);
+      const pad = n => String(n).padStart(2, '0');
+      if (!editDuePicker.value) {
+        editDuePicker.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      }
+      editingDue = editDuePicker.value;
+      updateEditDueDisplay();
+      editDuePicker.showPicker?.() || editDuePicker.click();
+    });
+    editDuePicker.addEventListener('change', () => {
+      editingDue = editDuePicker.value || '';
+      updateEditDueDisplay();
+    });
+    document.getElementById('edit-remove-due-btn').addEventListener('click', () => {
+      editingDue = '';
+      editDuePicker.value = '';
+      updateEditDueDisplay();
+    });
 
     const duePicker = document.getElementById('due-picker');
     document.getElementById('open-due-btn').addEventListener('click', () => {
