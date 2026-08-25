@@ -720,7 +720,6 @@
   </div>
 
   <footer class="app-footer">
-    <div class="backup-status" id="backup-status"></div>
     <div>Daily Planner v0.1 &nbsp;<span class="network-badge" id="network-badge"></span></div>
     <div class="footer-actions">
       <button class="btn-ghost" id="export-btn">Export backup &#8675;</button>
@@ -783,7 +782,6 @@
 
     function saveAll(data) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      scheduleBackup();
     }
 
     function getDayData(key) {
@@ -1278,9 +1276,7 @@
 
     render();
     updateNetworkBadge();
-    // Request durable storage so the browser won't auto-evict localStorage
     navigator.storage?.persist?.();
-    scheduleBackup();
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -1305,26 +1301,10 @@
     window.addEventListener('online',  updateNetworkBadge);
     window.addEventListener('offline', updateNetworkBadge);
 
-    // ── OPFS auto-backup ──────────────────────────────────────────────────────
+    // ── OPFS backup (called only by manual export; not on every save) ──────────
     // Writes to origin-private file system: local_app_storage/alfiejwDailyPlannerApp/backup.json
-    // Note: OPFS is sandboxed to the browser — not visible in the phone's file manager.
-    // Use the Export button below to save a file to your Downloads folder.
-
-    let backupTimer;
-    function scheduleBackup() {
-      setBackupStatus('pending');
-      clearTimeout(backupTimer);
-      backupTimer = setTimeout(backupToOPFS, 1500);
-    }
-
-    function setBackupStatus(s) {
-      const el = document.getElementById('backup-status');
-      if (!el) return;
-      if (s === 'pending') el.textContent = 'Backing up locally \u29D7';
-      else if (s === 'done') el.textContent = 'Backed up locally \u2713';
-      else if (s === 'error') el.textContent = 'Auto-backup unavailable';
-      else el.textContent = '';
-    }
+    // Note: OPFS is sandboxed — not visible in the phone's file manager.
+    // Use the Export button to save to Downloads instead.
 
     async function backupToOPFS() {
       // Race the write against a 4-second timeout so a stalled OPFS promise can't block forever
