@@ -284,6 +284,75 @@
     .p-normal { background: #e0edf0; color: #2a6880; }
     .p-low    { background: #e6f4ea; color: #2e7d32; }
 
+    /* ── Due date bubble ──────────────────────────────────────────── */
+    .due-bubble {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #e0cece;
+      border-radius: 7px;
+      padding: 3px 7px;
+      flex-shrink: 0;
+      line-height: 1.35;
+      min-width: 44px;
+    }
+    .due-bubble.due-today   { background: #fffce0; }
+    .due-bubble.due-overdue { background: #ffeaea; }
+    .due-time { font-size: 0.7rem;  font-weight: 700; color: var(--text); }
+    .due-date { font-size: 0.62rem; color: var(--text-muted); }
+    .task-item.done .due-time,
+    .task-item.done .due-date { color: var(--text-muted); }
+
+    /* ── Composer due row ─────────────────────────────────────────── */
+    .composer-due-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      min-height: 28px;
+    }
+    .btn-due {
+      background: none;
+      border: 1px dashed #c0a8aa;
+      border-radius: 6px;
+      color: #a08090;
+      font-family: inherit;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-due:hover { background: #fdeaea; color: var(--primary); border-color: var(--primary); border-style: solid; }
+    .due-preview {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: #ede0e0;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .due-preview-date { font-weight: 400; color: var(--text-muted); }
+    .btn-remove-due {
+      background: none;
+      border: none;
+      color: #b09090;
+      font-family: inherit;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      padding: 0 2px;
+      transition: color 0.15s;
+    }
+    .btn-remove-due:hover { color: var(--primary); }
+
     .btn-delete {
       background: none;
       border: none;
@@ -410,6 +479,16 @@
         </select>
         <button class="btn-add" id="add-btn" aria-label="Add task">+</button>
       </div>
+      <div class="composer-due-row">
+        <button class="btn-due" id="open-due-btn" aria-label="Set due date and time">+ DUE</button>
+        <div class="due-preview" id="due-preview" style="display:none">
+          <span id="due-preview-time"></span>
+          <span class="due-preview-date" id="due-preview-date"></span>
+          <button class="btn-remove-due" id="remove-due-btn" aria-label="Remove due date">Remove</button>
+        </div>
+      </div>
+      <input type="datetime-local" id="due-picker" aria-label="Due date and time"
+        style="position:fixed;opacity:0;pointer-events:none;width:0;height:0" />
     </div>
 
     <!-- Task list -->
@@ -465,6 +544,15 @@
       if (diff === 1)  return 'Tomorrow';
       if (diff === -1) return 'Yesterday';
       return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    function formatDueTime(iso) {
+      const d = new Date(iso);
+      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    function formatDueDate(iso) {
+      return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
     }
 
     function shiftDay(d, n) {
@@ -588,7 +676,7 @@
         const badge = document.createElement('span');
         const p = task.priority || 'normal';
         badge.className = `priority-badge p-${p}`;
-        badge.textContent = p;
+        badge.textContent = p === 'normal' ? 'NORM' : p;
 
         const del = document.createElement('button');
         del.className = 'btn-delete';
@@ -596,12 +684,42 @@
         del.setAttribute('aria-label', `Delete task: ${task.text}`);
         del.addEventListener('click', () => deleteTask(task.id));
 
-        li.append(cb, span, badge, del);
+        if (task.due) {
+          const now = new Date();
+          const dueD = new Date(task.due);
+          let dueCls = 'due-future';
+          if (dueD < now) dueCls = 'due-overdue';
+          else if (toKey(dueD) === toKey(now)) dueCls = 'due-today';
+          const bubble = document.createElement('div');
+          bubble.className = `due-bubble ${dueCls}`;
+          const tEl = document.createElement('span'); tEl.className = 'due-time'; tEl.textContent = formatDueTime(task.due);
+          const dEl = document.createElement('span'); dEl.className = 'due-date'; dEl.textContent = formatDueDate(task.due);
+          bubble.append(tEl, dEl);
+          li.append(cb, span, bubble, badge, del);
+        } else {
+          li.append(cb, span, badge, del);
+        }
         list.appendChild(li);
       });
     }
 
     // ── Task actions ──────────────────────────────────────────────────────────
+
+    let pendingDue = '';
+
+    function updateDueDisplay() {
+      const preview = document.getElementById('due-preview');
+      const openBtn = document.getElementById('open-due-btn');
+      if (pendingDue) {
+        openBtn.style.display = 'none';
+        preview.style.display = 'flex';
+        document.getElementById('due-preview-time').textContent = formatDueTime(pendingDue);
+        document.getElementById('due-preview-date').textContent = formatDueDate(pendingDue);
+      } else {
+        openBtn.style.display = '';
+        preview.style.display = 'none';
+      }
+    }
 
     function addTask() {
       const input = document.getElementById('task-input');
@@ -612,10 +730,13 @@
       const key = toKey(currentDate);
       const day = getDayData(key);
 
-      day.tasks.push({ id: Date.now(), text, done: false, priority });
+      day.tasks.push({ id: Date.now(), text, done: false, priority, due: pendingDue || null });
       saveDayData(key, day);
 
       input.value = '';
+      pendingDue = '';
+      document.getElementById('due-picker').value = '';
+      updateDueDisplay();
       input.focus();
       render();
     }
@@ -689,6 +810,27 @@
       render();
     });
     document.getElementById('clear-done-btn').addEventListener('click', clearDone);
+
+    const duePicker = document.getElementById('due-picker');
+    document.getElementById('open-due-btn').addEventListener('click', () => {
+      if (!duePicker.value) {
+        // default to next rounded 30-minute slot
+        const now = new Date();
+        now.setMinutes(Math.ceil((now.getMinutes() + 1) / 30) * 30, 0, 0);
+        const pad = n => String(n).padStart(2, '0');
+        duePicker.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      }
+      duePicker.showPicker?.() || duePicker.click();
+    });
+    duePicker.addEventListener('change', () => {
+      pendingDue = duePicker.value || '';
+      updateDueDisplay();
+    });
+    document.getElementById('remove-due-btn').addEventListener('click', () => {
+      pendingDue = '';
+      duePicker.value = '';
+      updateDueDisplay();
+    });
 
     const datePicker = document.getElementById('date-picker');
     document.getElementById('open-cal').addEventListener('click', () => {
