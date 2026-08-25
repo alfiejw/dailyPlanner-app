@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#AD6C6D" />
+  <meta name="theme-color" content="#d4a0bc" />
   <meta name="description" content="A simple daily task planner that works offline." />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -17,17 +17,17 @@
   />
   <style>
     :root {
-      --primary:        #AD6C6D;
-      --primary-dark:   #9a5c5d;
-      --secondary:      #556b5e;
-      --secondary-dark: #445849;
-      --bg:             #f4e4e4;
+      --primary:        #d4a0bc;  /* pastel rose-pink */
+      --primary-dark:   #be88a6;
+      --secondary:      #7ab89a;  /* pastel sage */
+      --secondary-dark: #5e9e80;
+      --bg:             #f7f2fa;  /* pale lavender-white */
       --card:           #ffffff;
-      --text:           #333333;
-      --text-muted:     #888888;
-      --border:         #e0c9c9;
+      --text:           #3a3248;  /* deep purple-grey */
+      --text-muted:     #8878a0;
+      --border:         #e0d0ea;  /* pale purple-pink */
       --radius:         12px;
-      --shadow:         0 2px 12px rgba(0,0,0,0.09);
+      --shadow:         0 2px 12px rgba(90,70,120,0.08);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -175,7 +175,7 @@
 
     .progress-wrap {
       flex: 1;
-      background: #e8d0d0;
+      background: #ecdaf4;
       border-radius: 20px;
       height: 10px;
       overflow: hidden;
@@ -183,7 +183,7 @@
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--secondary), var(--primary));
+      background: var(--secondary);
       border-radius: 20px;
       transition: width 0.4s ease;
     }
@@ -293,9 +293,9 @@
       width: 38px;
       text-align: center;
     }
-    .p-high   { background: #ffe0e0; color: #b03030; }
-    .p-normal { background: #e0edf0; color: #2a6880; }
-    .p-low    { background: #e6f4ea; color: #2e7d32; }
+    .p-high   { background: #ead8f8; color: #7050a8; }
+    .p-normal { background: #c8e0f8; color: #3060a0; }
+    .p-low    { background: #cceadc; color: #387060; }
 
     /* ── Due date bubble ──────────────────────────────────────────── */
     .due-bubble {
@@ -303,7 +303,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #e0cece;
+      background: #ecdaf4;
       border-radius: 7px;
       padding: 3px 7px;
       flex-shrink: 0;
@@ -327,9 +327,9 @@
     }
     .btn-due {
       background: none;
-      border: 1px dashed #c0a8aa;
+      border: 1px dashed #c0a8d0;
       border-radius: 6px;
-      color: #a08090;
+      color: #9070a8;
       font-family: inherit;
       font-size: 0.7rem;
       font-weight: 700;
@@ -338,12 +338,12 @@
       cursor: pointer;
       transition: all 0.15s;
     }
-    .btn-due:hover { background: #fdeaea; color: var(--primary); border-color: var(--primary); border-style: solid; }
+    .btn-due:hover { background: #f4eafc; color: var(--primary); border-color: var(--primary); border-style: solid; }
     .due-preview {
       display: flex;
       align-items: center;
       gap: 7px;
-      background: #ede0e0;
+      background: #ead8f4;
       border-radius: 6px;
       padding: 3px 10px;
       font-size: 0.78rem;
@@ -355,9 +355,9 @@
     .due-preview-date { font-weight: 400; color: var(--text-muted); }
     .btn-remove-due {
       background: none;
-      border: 1px solid #c0a8aa;
+      border: 1px solid #c0a8d0;
       border-radius: 6px;
-      color: #b09090;
+      color: #9878b8;
       font-family: inherit;
       font-size: 0.65rem;
       font-weight: 700;
@@ -367,12 +367,12 @@
       padding: 2px 8px;
       transition: all 0.15s;
     }
-    .btn-remove-due:hover { background: #fdeaea; color: var(--primary); border-color: var(--primary); }
+    .btn-remove-due:hover { background: #f4eafc; color: var(--primary); border-color: var(--primary); }
 
     .btn-delete {
       background: none;
       border: none;
-      color: #c0a0a0;
+      color: #b098c0;
       font-size: 1.15rem;
       line-height: 1;
       cursor: pointer;
@@ -404,9 +404,9 @@
     /* ── Clear done btn ───────────────────────────────────────────────── */
     .btn-ghost {
       background: none;
-      border: 1px solid #c8adb0;
+      border: 1px solid #c4a8d8;
       border-radius: 6px;
-      color: #b09090;
+      color: #9878b8;
       font-family: inherit;
       font-size: 0.7rem;
       font-weight: 600;
@@ -414,12 +414,12 @@
       cursor: pointer;
       transition: all 0.15s;
     }
-    .btn-ghost:hover { background: #fdeaea; color: var(--primary); border-color: var(--primary); }
+    .btn-ghost:hover { background: #f4eafc; color: var(--primary); border-color: var(--primary); }
     .btn-reorder {
       background: none;
-      border: 1px solid #c8adb0;
+      border: 1px solid #c4a8d8;
       border-radius: 6px;
-      color: #b09090;
+      color: #9878b8;
       font-family: inherit;
       font-size: 0.7rem;
       font-weight: 600;
@@ -427,7 +427,7 @@
       cursor: pointer;
       transition: all 0.15s;
     }
-    .btn-reorder:hover { background: #fdeaea; color: var(--primary); border-color: var(--primary); }
+    .btn-reorder:hover { background: #f4eafc; color: var(--primary); border-color: var(--primary); }
     .btn-reorder.active { background: var(--secondary); color: #fff; border-color: var(--secondary); }
 
     .btn-edit {
@@ -534,13 +534,13 @@
       cursor: pointer;
       transition: background 0.15s;
     }
-    .btn-modal-save:hover { background: #e6eeea; }
+    .btn-modal-save:hover { background: #e0f0ea; }
 
     .drag-handle {
       font-size: 1rem;
       cursor: grab;
       padding: 2px 2px;
-      color: #b09090;
+      color: #a890c0;
       flex-shrink: 0;
       touch-action: none;
       user-select: none;
@@ -558,7 +558,7 @@
 
     .priority-divider {
       list-style: none;
-      border-top: 1px solid rgba(0,0,0,0.08);
+      border-top: 1px solid rgba(120,80,160,0.12);
       margin: 2px 6px;
     }
     /* ── Notes ────────────────────────────────────────────────────────── */
@@ -719,7 +719,15 @@
     </div>
   </div>
 
-  <footer class="app-footer">Daily Planner &middot; works offline</footer>
+  <footer class="app-footer">
+    <div class="backup-status" id="backup-status"></div>
+    <div>Daily Planner v0.1 &nbsp;<span class="network-badge" id="network-badge"></span></div>
+    <div class="footer-actions">
+      <button class="btn-ghost" id="export-btn">Export backup &#8675;</button>
+      <button class="btn-ghost" id="import-btn">Import backup &#8673;</button>
+      <input type="file" id="import-input" accept=".json" style="display:none" />
+    </div>
+  </footer>
 
   <script>
     // ── Date helpers ──────────────────────────────────────────────────────────
@@ -765,7 +773,8 @@
 
     // ── Storage ───────────────────────────────────────────────────────────────
 
-    const STORAGE_KEY = 'plannerData';
+    const STORAGE_KEY  = 'plannerData';
+    const APP_VERSION  = '0.1';
 
     function loadAll() {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -774,6 +783,7 @@
 
     function saveAll(data) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      scheduleBackup();
     }
 
     function getDayData(key) {
@@ -1260,6 +1270,10 @@
     // ── Boot ──────────────────────────────────────────────────────────────────
 
     render();
+    updateNetworkBadge();
+    // Request durable storage so the browser won't auto-evict localStorage
+    navigator.storage?.persist?.();
+    scheduleBackup();
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -1268,6 +1282,120 @@
         });
       });
     }
+
+    // ── Network status ────────────────────────────────────────────────────────
+
+    function updateNetworkBadge() {
+      const el = document.getElementById('network-badge');
+      if (navigator.onLine) {
+        el.textContent = '(online)';
+        el.className = 'network-badge network-online';
+      } else {
+        el.textContent = '(offline)';
+        el.className = 'network-badge network-offline';
+      }
+    }
+    window.addEventListener('online',  updateNetworkBadge);
+    window.addEventListener('offline', updateNetworkBadge);
+
+    // ── OPFS auto-backup ──────────────────────────────────────────────────────
+    // Writes to origin-private file system: local_app_storage/alfiejwDailyPlannerApp/backup.json
+    // Note: OPFS is sandboxed to the browser — not visible in the phone's file manager.
+    // Use the Export button below to save a file to your Downloads folder.
+
+    let backupTimer;
+    function scheduleBackup() {
+      setBackupStatus('pending');
+      clearTimeout(backupTimer);
+      backupTimer = setTimeout(backupToOPFS, 1500);
+    }
+
+    function setBackupStatus(s) {
+      const el = document.getElementById('backup-status');
+      if (!el) return;
+      if (s === 'pending') el.textContent = 'Backing up locally \u29D7';
+      else if (s === 'done') el.textContent = 'Backed up locally \u2713';
+      else if (s === 'error') el.textContent = 'Auto-backup unavailable';
+      else el.textContent = '';
+    }
+
+    async function backupToOPFS() {
+      if (!navigator.storage?.getDirectory) { setBackupStatus('error'); return; }
+      try {
+        const root    = await navigator.storage.getDirectory();
+        const appDir  = await (await root.getDirectoryHandle('local_app_storage', { create: true }))
+                              .getDirectoryHandle('alfiejwDailyPlannerApp', { create: true });
+        const fh      = await appDir.getFileHandle('backup.json', { create: true });
+        const writable = await fh.createWritable();
+        await writable.write(JSON.stringify({
+          version: 1, appVersion: APP_VERSION,
+          exportedAt: new Date().toISOString(),
+          plannerData: loadAll()
+        }, null, 2));
+        await writable.close();
+        setBackupStatus('done');
+      } catch (err) {
+        console.warn('OPFS backup failed:', err);
+        setBackupStatus('error');
+      }
+    }
+
+    // ── Export / Import ───────────────────────────────────────────────────────
+
+    function exportData() {
+      const payload = JSON.stringify({
+        version: 1, appVersion: APP_VERSION,
+        exportedAt: new Date().toISOString(),
+        plannerData: loadAll()
+      }, null, 2);
+      const url = URL.createObjectURL(new Blob([payload], { type: 'application/json' }));
+      const a = Object.assign(document.createElement('a'), {
+        href: url,
+        download: `planner-backup-${new Date().toISOString().slice(0,10)}.json`
+      });
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          const raw = parsed.plannerData ?? parsed;
+          const normalized = {};
+          Object.entries(raw).forEach(([date, day]) => {
+            normalized[date] = {
+              tasks: (day.tasks || []).map(t => ({
+                id:       t.id       ?? Date.now(),
+                text:     t.text     ?? '',
+                done:     t.done     ?? false,
+                priority: t.priority ?? 'normal',
+                due:      t.due      ?? null,
+              })),
+              notes: day.notes ?? ''
+            };
+          });
+          saveAll(normalized);
+          render();
+        } catch {
+          alert('Invalid or unrecognised backup file.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    document.getElementById('export-btn').addEventListener('click', () => {
+      if (confirm('Export your planner data as a JSON file to your Downloads folder?\n\nYour current data will not be affected — this only creates a copy.')) exportData();
+    });
+    document.getElementById('import-btn').addEventListener('click', () => {
+      if (confirm('Import a backup file?\n\nThis will REPLACE all current tasks and notes with the data from the file. This cannot be undone.')) {
+        document.getElementById('import-input').click();
+      }
+    });
+    document.getElementById('import-input').addEventListener('change', e => {
+      if (e.target.files[0]) { importData(e.target.files[0]); e.target.value = ''; }
+    });
   </script>
 </body>
 </html>
