@@ -69,17 +69,24 @@
 
     /* ── Day navigation ───────────────────────────────────────────────── */
     .day-nav {
-      position: relative;
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
       background: var(--secondary);
       padding: 10px 16px;
     }
 
-    #open-cal  { position: absolute; left: 16px; }
-    #go-today   { position: absolute; right: 16px; }
+    .nav-center {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-side {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
     .nav-arrow {
       background: rgba(255,255,255,0.18);
@@ -479,12 +486,18 @@
   </header>
 
   <nav class="day-nav" aria-label="Day navigation">
-    <button class="today-btn" id="open-cal" aria-label="Pick a date">&#128197;</button>
-    <input type="date" id="date-picker" aria-label="Date picker" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0" />
-    <button class="nav-arrow" id="prev-day" aria-label="Previous day">&#8249;</button>
-    <div class="day-label" id="day-label" aria-live="polite"></div>
-    <button class="nav-arrow" id="next-day" aria-label="Next day">&#8250;</button>
-    <button class="today-btn" id="go-today">Today</button>
+    <div class="nav-side">
+      <button class="today-btn" id="open-cal" aria-label="Pick a date">&#128197;</button>
+      <input type="date" id="date-picker" aria-label="Date picker" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0" />
+    </div>
+    <div class="nav-center">
+      <button class="nav-arrow" id="prev-day" aria-label="Previous day">&#8249;</button>
+      <div class="day-label" id="day-label" aria-live="polite"></div>
+      <button class="nav-arrow" id="next-day" aria-label="Next day">&#8250;</button>
+    </div>
+    <div class="nav-side">
+      <button class="today-btn" id="go-today">Today</button>
+    </div>
   </nav>
 
   <main class="content">
