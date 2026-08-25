@@ -890,7 +890,12 @@
           handle.className = 'drag-handle';
           handle.textContent = '\u2630';
           handle.setAttribute('aria-label', 'Hold to reorder');
-          handle.addEventListener('pointerdown', e => { e.preventDefault(); startDrag(task.id); });
+          handle.addEventListener('pointerdown', e => {
+            e.preventDefault();
+            // Release implicit capture so pointermove/pointerup bubble to document
+            e.target.releasePointerCapture(e.pointerId);
+            startDrag(task.id);
+          });
           firstEl = handle;
         } else {
           const cb = document.createElement('input');
@@ -964,6 +969,7 @@
       dragEl.classList.add('reorder-dragging');
       document.addEventListener('pointermove', onDragMove, { passive: false });
       document.addEventListener('pointerup', onDragEnd);
+      document.addEventListener('pointercancel', onDragEnd);
     }
 
     function onDragMove(e) {
@@ -1006,6 +1012,7 @@
     function onDragEnd() {
       document.removeEventListener('pointermove', onDragMove);
       document.removeEventListener('pointerup', onDragEnd);
+      document.removeEventListener('pointercancel', onDragEnd);
 
       if (dragId && dragOverId && dragId !== dragOverId) {
         const key   = toKey(currentDate);
