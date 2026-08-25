@@ -1,9 +1,8 @@
-const CACHE_NAME = 'daily-planner-v1';
+const CACHE_NAME = 'daily-planner-v2';
 const FONT_CACHE  = 'daily-planner-fonts-v1';
 
-const APP_ASSETS = [
-  './',
-  './index.html',
+// Only pre-cache non-HTML assets; index.html is fetched network-first
+const STATIC_ASSETS = [
   './manifest.json',
   './icons/icon.svg',
   './icons/icon-maskable.svg',
@@ -13,7 +12,7 @@ const APP_ASSETS = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(APP_ASSETS))
+      .then(cache => cache.addAll(STATIC_ASSETS))
       .then(() => self.skipWaiting())
   );
 });
@@ -31,11 +30,11 @@ self.addEventListener('activate', event => {
   );
 });
 
-// ── Fetch: cache-first for own assets, stale-while-revalidate for fonts ───────
+// ── Fetch ─────────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Google Fonts: cache after first load so the app looks right offline too
+  // Google Fonts: cache-first after first load
   if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
     event.respondWith(
       caches.open(FONT_CACHE).then(cache =>
@@ -51,20 +50,29 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Same-origin assets: cache-first, fall back to index.html for navigation
-  if (url.origin === location.origin) {
+  if (url.origin !== location.origin) return;
+
+  // HTML: network-first so a new deployment is live on the next reload
+  if (event.request.mode === 'navigate') {
     event.respondWith(
-      caches.match(event.request).then(cached =>
-        cached ||
-        fetch(event.request)
-          .then(response => {
-            if (response.ok) {
-              caches.open(CACHE_NAME).then(c => c.put(event.request, response.clone()));
-            }
-            return response;
-          })
-          .catch(() => caches.match('./index.html'))
-      )
+      fetch(event.request)
+        .then(response => {
+          caches.open(CACHE_NAME).then(c => c.put(event.request, response.clone()));
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
     );
+    return;
   }
+
+  // Other same-origin assets (icons, manifest): cache-first
+  event.respondWith(
+    caches.match(event.request).then(cached =>
+      cached ||
+      fetch(event.request).then(response => {
+        if (response.ok) caches.open(CACHE_NAME).then(c => c.put(event.request, response.clone()));
+        return response;
+      })
+    )
+  );
 });
