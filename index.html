@@ -688,6 +688,12 @@
 
   </main>
 
+  <div class="backup-actions">
+    <button class="btn-ghost" id="export-btn">Export backup &#8675;</button>
+    <input type="file" id="import-input" accept=".json" style="display:none" />
+    <button class="btn-ghost" id="import-btn">Import backup &#8673;</button>
+  </div>
+
   <!-- Edit task modal -->
   <div class="modal-overlay hidden" id="edit-modal" role="dialog" aria-modal="true" aria-label="Edit task">
     <div class="modal-card">
@@ -720,12 +726,7 @@
   </div>
 
   <footer class="app-footer">
-    <div>Daily Planner v0.1 &nbsp;<span class="network-badge" id="network-badge"></span></div>
-    <div class="footer-actions">
-      <button class="btn-ghost" id="export-btn">Export backup &#8675;</button>
-      <button class="btn-ghost" id="import-btn">Import backup &#8673;</button>
-      <input type="file" id="import-input" accept=".json" style="display:none" />
-    </div>
+    <span>Daily Planner v0.1 &nbsp;<span class="network-badge" id="network-badge"></span></span>
   </footer>
 
   <script>
@@ -1384,7 +1385,7 @@
       if (confirm('Export your planner data as a JSON file to your Downloads folder?\n\nYour current data will not be affected — this only creates a copy.')) exportData();
     });
     document.getElementById('import-btn').addEventListener('click', () => {
-      if (confirm('Import a backup file?\n\nThis will REPLACE all current tasks and notes with the data from the file. This cannot be undone.')) {
+      if (confirm('Import from a previously exported backup file?\n\nThis will REPLACE all current tasks and notes with the contents of that file. If no backup file has been exported, nothing will happen. This cannot be undone.')) {
         document.getElementById('import-input').click();
       }
     });
