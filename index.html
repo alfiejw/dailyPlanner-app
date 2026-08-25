@@ -439,7 +439,7 @@
       line-height: 1;
     }
     .btn-edit:hover { opacity: 1; }
-    .btn-edit-icon { display: inline-block; font-size: 1rem; transform: scaleY(-1); }
+    .btn-edit-icon { display: inline-block; font-size: 1rem; transform: scaleX(-1); }
 
     /* ── Edit modal ────────────────────────────────────────────── */
     .modal-overlay {
@@ -616,6 +616,7 @@
 
     <!-- Progress -->
     <div class="card">
+      <div class="card-title">Progress</div>
       <div class="progress-row">
         <div class="progress-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="progress-bar" aria-valuenow="0">
           <div class="progress-fill" id="progress-fill" style="width:0%"></div>
@@ -1063,6 +1064,7 @@
       const key = toKey(currentDate);
       const day = getDayData(key);
       if (!day.tasks.some(t => t.done)) return;
+      if (!confirm('Remove all completed tasks?')) return;
       day.tasks = day.tasks.filter(t => !t.done);
       saveDayData(key, day);
       renderTasks(day.tasks);
