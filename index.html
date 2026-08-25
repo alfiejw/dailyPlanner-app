@@ -371,6 +371,8 @@
   </header>
 
   <nav class="day-nav" aria-label="Day navigation">
+    <button class="today-btn" id="open-cal" aria-label="Pick a date">&#128197;</button>
+    <input type="date" id="date-picker" aria-label="Date picker" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0" />
     <button class="nav-arrow" id="prev-day" aria-label="Previous day">&#8249;</button>
     <div class="day-label" id="day-label" aria-live="polite"></div>
     <button class="nav-arrow" id="next-day" aria-label="Next day">&#8250;</button>
@@ -402,8 +404,8 @@
           aria-label="New task"
         />
         <select id="priority-select" aria-label="Priority">
-          <option value="normal">Normal</option>
           <option value="high">&#9650; High</option>
+          <option value="normal" selected>Normal</option>
           <option value="low">&#9660; Low</option>
         </select>
         <button class="btn-add" id="add-btn" aria-label="Add task">+</button>
@@ -512,7 +514,14 @@
       renderTasks(day.tasks || []);
     }
 
+    const PRIORITY_ORDER = { high: 0, normal: 1, low: 2 };
+
     function renderTasks(tasks) {
+      const sorted = [...tasks].sort((a, b) => {
+        const pd = (PRIORITY_ORDER[a.priority] ?? 1) - (PRIORITY_ORDER[b.priority] ?? 1);
+        return pd !== 0 ? pd : a.id - b.id;
+      });
+      tasks = sorted;
       const list  = document.getElementById('task-list');
       const fill  = document.getElementById('progress-fill');
       const bar   = document.getElementById('progress-bar');
@@ -656,6 +665,18 @@
       render();
     });
     document.getElementById('clear-done-btn').addEventListener('click', clearDone);
+
+    const datePicker = document.getElementById('date-picker');
+    document.getElementById('open-cal').addEventListener('click', () => {
+      datePicker.value = toKey(currentDate);
+      datePicker.showPicker?.() || datePicker.click();
+    });
+    datePicker.addEventListener('change', () => {
+      if (!datePicker.value) return;
+      const [y, m, d] = datePicker.value.split('-').map(Number);
+      currentDate = new Date(y, m - 1, d);
+      render();
+    });
 
     // ── Boot ──────────────────────────────────────────────────────────────────
 
