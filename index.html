@@ -279,7 +279,7 @@
     }
     .task-item.done .task-text {
       text-decoration: line-through;
-      color: var(--text-muted);
+      color: var(--text);
     }
 
     .priority-badge {
@@ -290,10 +290,10 @@
       padding: 2px 0;
       border-radius: 10px;
       flex-shrink: 0;
-      width: 38px;
+      width: 44px;
       text-align: center;
     }
-    .p-high   { background: #ead8f8; color: #7050a8; }
+    .p-high   { background: #ffd8d8; color: #b03040; }
     .p-normal { background: #c8e0f8; color: #3060a0; }
     .p-low    { background: #cceadc; color: #387060; }
 
@@ -1320,24 +1320,32 @@
     }
 
     async function backupToOPFS() {
-      if (!navigator.storage?.getDirectory) { setBackupStatus('error'); return; }
+      // Race the write against a 4-second timeout so a stalled OPFS promise can't block forever
+      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000));
       try {
-        const root    = await navigator.storage.getDirectory();
-        const appDir  = await (await root.getDirectoryHandle('local_app_storage', { create: true }))
-                              .getDirectoryHandle('alfiejwDailyPlannerApp', { create: true });
-        const fh      = await appDir.getFileHandle('backup.json', { create: true });
-        const writable = await fh.createWritable();
-        await writable.write(JSON.stringify({
-          version: 1, appVersion: APP_VERSION,
-          exportedAt: new Date().toISOString(),
-          plannerData: loadAll()
-        }, null, 2));
-        await writable.close();
+        await Promise.race([doOPFSWrite(), timeout]);
         setBackupStatus('done');
       } catch (err) {
-        console.warn('OPFS backup failed:', err);
+        console.warn('OPFS backup:', err.message || err);
         setBackupStatus('error');
       }
+    }
+
+    async function doOPFSWrite() {
+      if (!navigator.storage?.getDirectory) throw new Error('no OPFS');
+      const root  = await navigator.storage.getDirectory();
+      const dir1  = await root.getDirectoryHandle('local_app_storage', { create: true });
+      const dir2  = await dir1.getDirectoryHandle('alfiejwDailyPlannerApp', { create: true });
+      const fh    = await dir2.getFileHandle('backup.json', { create: true });
+      // createWritable is absent or broken on iOS Safari < 17
+      if (typeof fh.createWritable !== 'function') throw new Error('createWritable unsupported');
+      const writable = await fh.createWritable();
+      await writable.write(JSON.stringify({
+        version: 1, appVersion: APP_VERSION,
+        exportedAt: new Date().toISOString(),
+        plannerData: loadAll()
+      }, null, 2));
+      await writable.close();
     }
 
     // ── Export / Import ───────────────────────────────────────────────────────
