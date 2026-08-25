@@ -501,9 +501,33 @@
 
     let currentDate = new Date();
 
+    // ── Rollover ──────────────────────────────────────────────────────────────
+
+    function rolloverPastTasks() {
+      const todayKey = toKey(new Date());
+      const all = loadAll();
+      let changed = false;
+
+      Object.keys(all).forEach(key => {
+        if (key >= todayKey) return;
+        const incomplete = (all[key].tasks || []).filter(t => !t.done);
+        if (!incomplete.length) return;
+
+        const today = all[todayKey] || { tasks: [], notes: '' };
+        const existing = new Set(today.tasks.map(t => t.id));
+        incomplete.forEach(t => { if (!existing.has(t.id)) { today.tasks.push(t); existing.add(t.id); } });
+        all[todayKey] = today;
+        all[key].tasks = all[key].tasks.filter(t => t.done);
+        changed = true;
+      });
+
+      if (changed) saveAll(all);
+    }
+
     // ── Render ────────────────────────────────────────────────────────────────
 
     function render() {
+      rolloverPastTasks();
       const key = toKey(currentDate);
       const day = getDayData(key);
 
