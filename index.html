@@ -276,9 +276,11 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      padding: 2px 7px;
+      padding: 2px 0;
       border-radius: 10px;
       flex-shrink: 0;
+      width: 38px;
+      text-align: center;
     }
     .p-high   { background: #ffe0e0; color: #b03030; }
     .p-normal { background: #e0edf0; color: #2a6880; }
@@ -619,7 +621,7 @@
       const key = toKey(currentDate);
       const day = getDayData(key);
 
-      document.getElementById('full-date').textContent  = formatFull(currentDate);
+      document.getElementById('full-date').textContent  = formatFull(new Date());
       document.getElementById('day-label').textContent   = formatShort(currentDate);
       document.getElementById('notes-input').value       = day.notes || '';
 
@@ -693,12 +695,13 @@
           bubble.className = 'due-bubble';
           const tEl = document.createElement('span'); tEl.className = 'due-time'; tEl.textContent = formatDueTime(task.due);
           const dEl = document.createElement('span'); dEl.className = 'due-date'; dEl.textContent = formatDueDate(task.due);
-          bubble.append(tEl, dEl);
           if (!task.done && (overdue || dueToday)) {
             const icon = document.createElement('span');
             icon.className = 'due-icon';
             icon.textContent = overdue ? '\u274C' : '\u26A0\uFE0F';
-            bubble.appendChild(icon);
+            bubble.append(icon, tEl, dEl);
+          } else {
+            bubble.append(tEl, dEl);
           }
           li.append(cb, span, bubble, badge, del);
         } else {
