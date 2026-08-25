@@ -69,6 +69,7 @@
 
     /* ── Day navigation ───────────────────────────────────────────────── */
     .day-nav {
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -76,6 +77,9 @@
       background: var(--secondary);
       padding: 10px 16px;
     }
+
+    #open-cal  { position: absolute; left: 16px; }
+    #go-today   { position: absolute; right: 16px; }
 
     .nav-arrow {
       background: rgba(255,255,255,0.18);
@@ -821,13 +825,14 @@
 
     const duePicker = document.getElementById('due-picker');
     document.getElementById('open-due-btn').addEventListener('click', () => {
+      // Always pre-fill so confirming without editing still sets the value
+      const now = new Date();
+      now.setMinutes(Math.ceil((now.getMinutes() + 1) / 30) * 30, 0, 0);
+      const pad = n => String(n).padStart(2, '0');
       if (!duePicker.value) {
-        // default to next rounded 30-minute slot
-        const now = new Date();
-        now.setMinutes(Math.ceil((now.getMinutes() + 1) / 30) * 30, 0, 0);
-        const pad = n => String(n).padStart(2, '0');
         duePicker.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
       }
+      pendingDue = duePicker.value;
       duePicker.showPicker?.() || duePicker.click();
     });
     duePicker.addEventListener('change', () => {
