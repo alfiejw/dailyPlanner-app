@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="90" fill="#AD6C6D"/>
+
+  <!-- Notepad body -->
+  <rect x="118" y="148" width="276" height="300" rx="14" fill="#ffffff"/>
+
+  <!-- Top bar -->
+  <rect x="118" y="148" width="276" height="56" rx="14" fill="#556b5e"/>
+  <rect x="118" y="186" width="276" height="18" fill="#556b5e"/>
+
+  <!-- Clip -->
+  <rect x="218" y="112" width="76" height="52" rx="10" fill="#3d5248"/>
+  <rect x="236" y="100" width="40" height="22" rx="8" fill="#2e3d35"/>
+
+  <!-- Ruled lines -->
+  <rect x="154" y="232" width="204" height="10" rx="5" fill="#e8d5d5"/>
+  <rect x="154" y="262" width="204" height="10" rx="5" fill="#e8d5d5"/>
+  <rect x="154" y="292" width="160" height="10" rx="5" fill="#e8d5d5"/>
+  <rect x="154" y="322" width="180" height="10" rx="5" fill="#e8d5d5"/>
+  <rect x="154" y="352" width="130" height="10" rx="5" fill="#e8d5d5"/>
+
+  <!-- Check circle (done item) -->
+  <circle cx="142" cy="237" r="10" fill="#556b5e"/>
+  <polyline points="136,237 140,242 149,230" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Pending dot -->
+  <circle cx="142" cy="267" r="10" fill="#AD6C6D" opacity="0.5"/>
+</svg>

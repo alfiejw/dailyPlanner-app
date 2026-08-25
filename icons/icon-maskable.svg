@@ -1,0 +1,29 @@
+<!-- Maskable icon: key content is within the central 80% safe zone (approx 205–307px on a 512px canvas) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full-bleed background (required for maskable) -->
+  <rect width="512" height="512" fill="#AD6C6D"/>
+
+  <!-- Notepad body — kept inside safe zone -->
+  <rect x="148" y="168" width="216" height="240" rx="12" fill="#ffffff"/>
+
+  <!-- Top bar -->
+  <rect x="148" y="168" width="216" height="48" rx="12" fill="#556b5e"/>
+  <rect x="148" y="200" width="216" height="16" fill="#556b5e"/>
+
+  <!-- Clip -->
+  <rect x="218" y="138" width="76" height="42" rx="9" fill="#3d5248"/>
+  <rect x="234" y="128" width="44" height="18" rx="7" fill="#2e3d35"/>
+
+  <!-- Ruled lines -->
+  <rect x="176" y="238" width="160" height="9" rx="4" fill="#e8d5d5"/>
+  <rect x="176" y="262" width="160" height="9" rx="4" fill="#e8d5d5"/>
+  <rect x="176" y="286" width="120" height="9" rx="4" fill="#e8d5d5"/>
+  <rect x="176" y="310" width="140" height="9" rx="4" fill="#e8d5d5"/>
+
+  <!-- Check circle -->
+  <circle cx="167" cy="242" r="9" fill="#556b5e"/>
+  <polyline points="161,242 165,247 174,235" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Pending dot -->
+  <circle cx="167" cy="266" r="9" fill="#AD6C6D" opacity="0.55"/>
+</svg>

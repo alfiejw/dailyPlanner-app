@@ -1,0 +1,25 @@
+{
+  "name": "Daily Planner",
+  "short_name": "Planner",
+  "description": "A simple daily task planner that works offline.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4e4e4",
+  "theme_color": "#AD6C6D",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

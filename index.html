@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#AD6C6D" />
+  <meta name="description" content="A simple daily task planner that works offline." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Daily Planner" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon.svg" />
+  <title>Daily Planner</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto+Slab:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --primary:        #AD6C6D;
+      --primary-dark:   #9a5c5d;
+      --secondary:      #556b5e;
+      --secondary-dark: #445849;
+      --bg:             #f4e4e4;
+      --card:           #ffffff;
+      --text:           #333333;
+      --text-muted:     #888888;
+      --border:         #e0c9c9;
+      --radius:         12px;
+      --shadow:         0 2px 12px rgba(0,0,0,0.09);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      color: var(--text);
+    }
+
+    /* ── Header ───────────────────────────────────────────────────────── */
+    .app-header {
+      background: var(--primary);
+      color: #fff;
+      padding: env(safe-area-inset-top, 0) 20px 18px;
+      padding-top: max(env(safe-area-inset-top, 0px), 20px);
+      text-align: center;
+    }
+
+    .app-header h1 {
+      font-family: 'Roboto Slab', Georgia, serif;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.1;
+    }
+
+    .app-header h1 .word-planner { color: rgba(255,255,255,0.72); }
+
+    .date-display {
+      margin-top: 5px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+
+    /* ── Day navigation ───────────────────────────────────────────────── */
+    .day-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: var(--secondary);
+      padding: 10px 16px;
+    }
+
+    .nav-arrow {
+      background: rgba(255,255,255,0.18);
+      border: none;
+      color: #fff;
+      font-size: 1.4rem;
+      line-height: 1;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .nav-arrow:hover { background: rgba(255,255,255,0.32); }
+
+    .day-label {
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      min-width: 130px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .today-btn {
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.45);
+      border-radius: 20px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .today-btn:hover { background: rgba(255,255,255,0.28); }
+
+    /* ── Layout ───────────────────────────────────────────────────────── */
+    .content {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 18px 14px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* ── Cards ────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+
+    .card-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .card-header-row .card-title { margin-bottom: 0; }
+
+    /* ── Progress bar ─────────────────────────────────────────────────── */
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .progress-wrap {
+      flex: 1;
+      background: #e8d0d0;
+      border-radius: 20px;
+      height: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--secondary), var(--primary));
+      border-radius: 20px;
+      transition: width 0.4s ease;
+    }
+
+    .progress-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--secondary);
+      min-width: 52px;
+      text-align: right;
+    }
+
+    /* ── Composer ─────────────────────────────────────────────────────── */
+    .composer {
+      display: flex;
+      gap: 8px;
+    }
+
+    .composer input[type="text"] {
+      flex: 1;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      min-width: 0;
+    }
+    .composer input[type="text"]:focus { border-color: var(--primary); }
+
+    .composer select {
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 0 8px;
+      font-family: inherit;
+      font-size: 0.78rem;
+      color: var(--text);
+      background: #fff;
+      cursor: pointer;
+      outline: none;
+      flex-shrink: 0;
+    }
+
+    .btn-add {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0 18px;
+      font-size: 1.4rem;
+      font-weight: 400;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-add:hover { background: var(--primary-dark); }
+
+    /* ── Task list ────────────────────────────────────────────────────── */
+    .task-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg);
+      border-radius: 8px;
+      transition: opacity 0.2s;
+    }
+    .task-item.done { opacity: 0.65; }
+
+    .task-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--secondary);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .task-text {
+      flex: 1;
+      font-size: 0.9rem;
+      word-break: break-word;
+      min-width: 0;
+    }
+    .task-item.done .task-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .priority-badge {
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 2px 7px;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .p-high   { background: #ffe0e0; color: #b03030; }
+    .p-normal { background: #e0edf0; color: #2a6880; }
+    .p-low    { background: #e6f4ea; color: #2e7d32; }
+
+    .btn-delete {
+      background: none;
+      border: none;
+      color: #c0a0a0;
+      font-size: 1.15rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-delete:hover { color: var(--primary); }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      padding: 18px 0 6px;
+    }
+
+    .save-indicator {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--secondary);
+      text-align: right;
+      margin-top: 10px;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .save-indicator.show { opacity: 1; }
+
+    /* ── Clear done btn ───────────────────────────────────────────────── */
+    .btn-ghost {
+      background: none;
+      border: 1px solid #c8adb0;
+      border-radius: 6px;
+      color: #b09090;
+      font-family: inherit;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-ghost:hover { background: #fdeaea; color: var(--primary); border-color: var(--primary); }
+
+    /* ── Notes ────────────────────────────────────────────────────────── */
+    .notes-textarea {
+      width: 100%;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--text);
+      resize: vertical;
+      min-height: 88px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .notes-textarea:focus { border-color: var(--secondary); }
+
+    /* ── Footer ───────────────────────────────────────────────────────── */
+    .app-footer {
+      text-align: center;
+      padding: 0 16px 20px;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Responsive ───────────────────────────────────────────────────── */
+    @media (max-width: 380px) {
+      .app-header h1 { font-size: 1.6rem; }
+      .day-label { min-width: 100px; font-size: 0.9rem; }
+      .composer select { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <h1>Daily <span class="word-planner">Planner</span></h1>
+    <div class="date-display" id="full-date"></div>
+  </header>
+
+  <nav class="day-nav" aria-label="Day navigation">
+    <button class="nav-arrow" id="prev-day" aria-label="Previous day">&#8249;</button>
+    <div class="day-label" id="day-label" aria-live="polite"></div>
+    <button class="nav-arrow" id="next-day" aria-label="Next day">&#8250;</button>
+    <button class="today-btn" id="go-today">Today</button>
+  </nav>
+
+  <main class="content">
+
+    <!-- Progress -->
+    <div class="card">
+      <div class="progress-row">
+        <div class="progress-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="progress-bar" aria-valuenow="0">
+          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+        <div class="progress-label" id="progress-label">0 / 0</div>
+      </div>
+    </div>
+
+    <!-- Composer -->
+    <div class="card">
+      <div class="card-title">Add a Task</div>
+      <div class="composer">
+        <input
+          type="text"
+          id="task-input"
+          placeholder="What needs doing?"
+          maxlength="200"
+          autocomplete="off"
+          aria-label="New task"
+        />
+        <select id="priority-select" aria-label="Priority">
+          <option value="normal">Normal</option>
+          <option value="high">&#9650; High</option>
+          <option value="low">&#9660; Low</option>
+        </select>
+        <button class="btn-add" id="add-btn" aria-label="Add task">+</button>
+      </div>
+    </div>
+
+    <!-- Task list -->
+    <div class="card">
+      <div class="card-header-row">
+        <div class="card-title">Tasks</div>
+        <button class="btn-ghost" id="clear-done-btn">Clear done</button>
+      </div>
+      <ul class="task-list" id="task-list" aria-label="Task list">
+        <li class="empty-state" id="empty-msg">No tasks yet — add one above!</li>
+      </ul>
+      <div class="save-indicator" id="save-indicator" aria-live="polite">Saved ✓</div>
+    </div>
+
+    <!-- Notes -->
+    <div class="card">
+      <div class="card-title">Notes for the day</div>
+      <textarea
+        class="notes-textarea"
+        id="notes-input"
+        placeholder="Jot down anything..."
+        maxlength="1000"
+        aria-label="Day notes"
+      ></textarea>
+    </div>
+
+  </main>
+
+  <footer class="app-footer">Daily Planner &middot; works offline</footer>
+
+  <script>
+    // ── Date helpers ──────────────────────────────────────────────────────────
+
+    function toKey(d) {
+      // Local date key "YYYY-MM-DD" — avoids UTC drift
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    }
+
+    function formatFull(d) {
+      return d.toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+      });
+    }
+
+    function formatShort(d) {
+      const todayKey = toKey(new Date());
+      const key = toKey(d);
+      const diff = Math.round(
+        (new Date(key + 'T00:00:00') - new Date(todayKey + 'T00:00:00')) / 86400000
+      );
+      if (diff === 0)  return 'Today';
+      if (diff === 1)  return 'Tomorrow';
+      if (diff === -1) return 'Yesterday';
+      return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    function shiftDay(d, n) {
+      const copy = new Date(d);
+      copy.setDate(copy.getDate() + n);
+      return copy;
+    }
+
+    // ── Storage ───────────────────────────────────────────────────────────────
+
+    const STORAGE_KEY = 'plannerData';
+
+    function loadAll() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+      catch { return {}; }
+    }
+
+    function saveAll(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function getDayData(key) {
+      return loadAll()[key] || { tasks: [], notes: '' };
+    }
+
+    function saveDayData(key, dayData) {
+      const all = loadAll();
+      all[key] = dayData;
+      saveAll(all);
+      flashSaved();
+    }
+
+    // ── State ─────────────────────────────────────────────────────────────────
+
+    let currentDate = new Date();
+
+    // ── Render ────────────────────────────────────────────────────────────────
+
+    function render() {
+      const key = toKey(currentDate);
+      const day = getDayData(key);
+
+      document.getElementById('full-date').textContent  = formatFull(currentDate);
+      document.getElementById('day-label').textContent   = formatShort(currentDate);
+      document.getElementById('notes-input').value       = day.notes || '';
+
+      renderTasks(day.tasks || []);
+    }
+
+    function renderTasks(tasks) {
+      const list  = document.getElementById('task-list');
+      const fill  = document.getElementById('progress-fill');
+      const bar   = document.getElementById('progress-bar');
+      const label = document.getElementById('progress-label');
+
+      list.innerHTML = '';
+
+      if (!tasks.length) {
+        const li = document.createElement('li');
+        li.className = 'empty-state';
+        li.id = 'empty-msg';
+        li.textContent = 'No tasks yet — add one above!';
+        list.appendChild(li);
+        fill.style.width = '0%';
+        bar.setAttribute('aria-valuenow', 0);
+        label.textContent = '0 / 0';
+        return;
+      }
+
+      const done = tasks.filter(t => t.done).length;
+      const pct  = Math.round((done / tasks.length) * 100);
+      fill.style.width = pct + '%';
+      bar.setAttribute('aria-valuenow', pct);
+      label.textContent = `${done} / ${tasks.length}`;
+
+      tasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'task-item' + (task.done ? ' done' : '');
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = task.done;
+        cb.setAttribute('aria-label', `Mark "${task.text}" as ${task.done ? 'not done' : 'done'}`);
+        cb.addEventListener('change', () => toggleTask(task.id));
+
+        const span = document.createElement('span');
+        span.className = 'task-text';
+        span.textContent = task.text;
+
+        const badge = document.createElement('span');
+        const p = task.priority || 'normal';
+        badge.className = `priority-badge p-${p}`;
+        badge.textContent = p;
+
+        const del = document.createElement('button');
+        del.className = 'btn-delete';
+        del.innerHTML = '&times;';
+        del.setAttribute('aria-label', `Delete task: ${task.text}`);
+        del.addEventListener('click', () => deleteTask(task.id));
+
+        li.append(cb, span, badge, del);
+        list.appendChild(li);
+      });
+    }
+
+    // ── Task actions ──────────────────────────────────────────────────────────
+
+    function addTask() {
+      const input = document.getElementById('task-input');
+      const text  = input.value.trim();
+      if (!text) { input.focus(); return; }
+
+      const priority = document.getElementById('priority-select').value;
+      const key = toKey(currentDate);
+      const day = getDayData(key);
+
+      day.tasks.push({ id: Date.now(), text, done: false, priority });
+      saveDayData(key, day);
+
+      input.value = '';
+      input.focus();
+      render();
+    }
+
+    function toggleTask(id) {
+      const key = toKey(currentDate);
+      const day = getDayData(key);
+      const t   = day.tasks.find(t => t.id === id);
+      if (!t) return;
+      t.done = !t.done;
+      saveDayData(key, day);
+      renderTasks(day.tasks);
+    }
+
+    function deleteTask(id) {
+      const key = toKey(currentDate);
+      const day = getDayData(key);
+      day.tasks = day.tasks.filter(t => t.id !== id);
+      saveDayData(key, day);
+      renderTasks(day.tasks);
+    }
+
+    function clearDone() {
+      const key = toKey(currentDate);
+      const day = getDayData(key);
+      if (!day.tasks.some(t => t.done)) return;
+      day.tasks = day.tasks.filter(t => !t.done);
+      saveDayData(key, day);
+      renderTasks(day.tasks);
+    }
+
+    // ── Notes autosave ────────────────────────────────────────────────────────
+
+    let notesTimer;
+    document.getElementById('notes-input').addEventListener('input', () => {
+      clearTimeout(notesTimer);
+      notesTimer = setTimeout(() => {
+        const key = toKey(currentDate);
+        const day = getDayData(key);
+        day.notes = document.getElementById('notes-input').value;
+        saveDayData(key, day);
+      }, 600);
+    });
+
+    // ── Save flash ────────────────────────────────────────────────────────────
+
+    let saveTimer;
+    function flashSaved() {
+      const el = document.getElementById('save-indicator');
+      el.classList.add('show');
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => el.classList.remove('show'), 1500);
+    }
+
+    // ── Event wiring ──────────────────────────────────────────────────────────
+
+    document.getElementById('add-btn').addEventListener('click', addTask);
+    document.getElementById('task-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') addTask();
+    });
+    document.getElementById('prev-day').addEventListener('click', () => {
+      currentDate = shiftDay(currentDate, -1);
+      render();
+    });
+    document.getElementById('next-day').addEventListener('click', () => {
+      currentDate = shiftDay(currentDate, 1);
+      render();
+    });
+    document.getElementById('go-today').addEventListener('click', () => {
+      currentDate = new Date();
+      render();
+    });
+    document.getElementById('clear-done-btn').addEventListener('click', clearDone);
+
+    // ── Boot ──────────────────────────────────────────────────────────────────
+
+    render();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(err => {
+          console.warn('Service worker registration failed:', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
