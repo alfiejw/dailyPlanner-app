@@ -35,6 +35,8 @@ jobs:
           cp index.html manifest.json sw.js _deploy/
           cp -r icons _deploy/
           touch _deploy/.nojekyll
+          # Replace DEV placeholder with the workflow run number
+          sed -i "s/const APP_VERSION  = '0\.1\.DEV'/const APP_VERSION  = '0.1.${{ github.run_number }}'/" _deploy/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

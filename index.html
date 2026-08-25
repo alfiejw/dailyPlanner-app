@@ -695,13 +695,17 @@
       ></textarea>
     </div>
 
-  </main>
+    <!-- Data backup -->
+    <div class="card">
+      <div class="card-title">Data Backup</div>
+      <div class="backup-actions">
+        <button class="btn-backup" id="export-btn">Export backup &#8675;</button>
+        <input type="file" id="import-input" accept=".json" style="display:none" />
+        <button class="btn-backup" id="import-btn">Import backup &#8673;</button>
+      </div>
+    </div>
 
-  <div class="backup-actions">
-    <button class="btn-ghost" id="export-btn">Export backup &#8675;</button>
-    <input type="file" id="import-input" accept=".json" style="display:none" />
-    <button class="btn-ghost" id="import-btn">Import backup &#8673;</button>
-  </div>
+  </main>
 
   <!-- Edit task modal -->
   <div class="modal-overlay hidden" id="edit-modal" role="dialog" aria-modal="true" aria-label="Edit task">
@@ -783,7 +787,7 @@
     // ── Storage ───────────────────────────────────────────────────────────────
 
     const STORAGE_KEY  = 'plannerData';
-    const APP_VERSION  = '0.1.1';
+    const APP_VERSION  = '0.1.DEV';
 
     function loadAll() {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
