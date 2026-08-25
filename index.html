@@ -960,14 +960,16 @@
       e.preventDefault();
       if (!dragId || !dragEl) return;
 
+      // Hide both the dragged item and the insert line so elementFromPoint sees through them
+      const existingLine = document.querySelector('.drag-insert-line');
       dragEl.style.visibility = 'hidden';
+      if (existingLine) existingLine.style.display = 'none';
       const under = document.elementFromPoint(e.clientX, e.clientY);
       dragEl.style.visibility = '';
-
-      // Remove any existing insert line
-      document.querySelectorAll('.drag-insert-line').forEach(el => el.remove());
+      if (existingLine) existingLine.style.display = '';
 
       const targetLi = under?.closest('.task-item[data-id]');
+      // If pointer is over a gap, divider, or insert line — keep the existing line unchanged
       if (!targetLi || targetLi === dragEl) return;
 
       const targetId = Number(targetLi.dataset.id);
@@ -976,13 +978,19 @@
       const targetTask = day.tasks.find(t => t.id === targetId);
       if (!dragTask || !targetTask || dragTask.priority !== targetTask.priority) return;
 
-      const rect = targetLi.getBoundingClientRect();
-      dragBefore = e.clientY < rect.top + rect.height / 2;
-      dragOverId = targetId;
+      const rect   = targetLi.getBoundingClientRect();
+      const before = e.clientY < rect.top + rect.height / 2;
 
+      // Skip DOM update if the insertion point hasn't actually changed
+      if (targetId === dragOverId && before === dragBefore && existingLine) return;
+
+      dragOverId = targetId;
+      dragBefore = before;
+
+      if (existingLine) existingLine.remove();
       const line = document.createElement('li');
       line.className = 'drag-insert-line';
-      targetLi.parentNode.insertBefore(line, dragBefore ? targetLi : targetLi.nextSibling);
+      targetLi.parentNode.insertBefore(line, before ? targetLi : targetLi.nextSibling);
     }
 
     function onDragEnd() {
