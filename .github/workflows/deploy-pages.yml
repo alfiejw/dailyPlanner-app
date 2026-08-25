@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -24,46 +24,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Compute and persist version
-        id: ver
-        run: |
-          # Extract major.minor from the DEV placeholder in source
-          MINOR=$(sed -n "s/.*APP_VERSION  = '\([0-9]*\.[0-9]*\)\.DEV'.*/\1/p" index.html)
-          PREV_MINOR=$(jq -r '.version' version.json)
-          PREV_PATCH=$(jq -r '.patch' version.json)
-          if [ "$MINOR" = "$PREV_MINOR" ]; then
-            PATCH=$(( PREV_PATCH + 1 ))
-          else
-            # Version bumped — reset patch to 1
-            PATCH=1
-          fi
-          printf '{"version":"%s","patch":%d}\n' "$MINOR" "$PATCH" > version.json
-          echo "full=${MINOR}.${PATCH}" >> "$GITHUB_OUTPUT"
-          echo "minor=$MINOR"           >> "$GITHUB_OUTPUT"
-
-      - name: Commit updated version.json
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add version.json
-          git commit -m "chore: v${{ steps.ver.outputs.full }} [skip ci]"
-          git push
 
       - name: Configure Pages
         uses: actions/configure-pages@v4
 
+      # Collect only the PWA files so we don't publish source dirs
       - name: Prepare deploy directory
         run: |
           mkdir -p _deploy
           cp index.html manifest.json sw.js _deploy/
           cp -r icons _deploy/
           touch _deploy/.nojekyll
-          MINOR="${{ steps.ver.outputs.minor }}"
-          VERSION="${{ steps.ver.outputs.full }}"
-          sed -i "s/const APP_VERSION  = '${MINOR}\.DEV'/const APP_VERSION  = '${VERSION}'/" _deploy/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
