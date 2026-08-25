@@ -297,8 +297,8 @@
       line-height: 1.35;
       min-width: 44px;
     }
-    .due-bubble.due-today   { background: #fffce0; }
-    .due-bubble.due-overdue { background: #ffeaea; }
+    .due-bubble { background: #fffce0; }
+    .due-icon { font-size: 0.85rem; line-height: 1; flex-shrink: 0; }
     .due-time { font-size: 0.7rem;  font-weight: 700; color: var(--text); }
     .due-date { font-size: 0.62rem; color: var(--text-muted); }
     .task-item.done .due-time,
@@ -687,14 +687,19 @@
         if (task.due) {
           const now = new Date();
           const dueD = new Date(task.due);
-          let dueCls = 'due-future';
-          if (dueD < now) dueCls = 'due-overdue';
-          else if (toKey(dueD) === toKey(now)) dueCls = 'due-today';
+          const overdue = dueD < now;
+          const dueToday = !overdue && toKey(dueD) === toKey(now);
           const bubble = document.createElement('div');
-          bubble.className = `due-bubble ${dueCls}`;
+          bubble.className = 'due-bubble';
           const tEl = document.createElement('span'); tEl.className = 'due-time'; tEl.textContent = formatDueTime(task.due);
           const dEl = document.createElement('span'); dEl.className = 'due-date'; dEl.textContent = formatDueDate(task.due);
           bubble.append(tEl, dEl);
+          if (!task.done && (overdue || dueToday)) {
+            const icon = document.createElement('span');
+            icon.className = 'due-icon';
+            icon.textContent = overdue ? '\u274C' : '\u26A0\uFE0F';
+            bubble.appendChild(icon);
+          }
           li.append(cb, span, bubble, badge, del);
         } else {
           li.append(cb, span, badge, del);
