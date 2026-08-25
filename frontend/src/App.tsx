@@ -138,28 +138,43 @@ export default function App() {
             onClick={() => setView("habits")}
             className={`view-tab habits ${view === "habits" ? "active" : ""}`}
           >
-            Weekly Habits
+            <span className="view-tab-label" aria-hidden="true">
+              <span>Weekly</span>
+              <span>Habits</span>
+            </span>
+            <span className="sr-only">Weekly Habits</span>
           </button>
           <button
             type="button"
             onClick={() => setView("weekly")}
             className={`view-tab weekly ${view === "weekly" ? "active" : ""}`}
           >
-            Weekly To-Do
+            <span className="view-tab-label" aria-hidden="true">
+              <span>Weekly</span>
+              <span>To-Do</span>
+            </span>
+            <span className="sr-only">Weekly To-Do</span>
           </button>
           <button
             type="button"
             onClick={() => setView("daily")}
             className={`view-tab daily ${view === "daily" ? "active" : ""}`}
           >
-            Daily Boards
+            <span className="view-tab-label" aria-hidden="true">
+              <span>Daily</span>
+              <span>Boards</span>
+            </span>
+            <span className="sr-only">Daily Boards</span>
           </button>
           <button
             type="button"
             onClick={() => setView("settings")}
             className={`view-tab settings ${view === "settings" ? "active" : ""}`}
           >
-            Settings
+            <span className="view-tab-label" aria-hidden="true">
+              <span>Settings</span>
+            </span>
+            <span className="sr-only">Settings</span>
           </button>
         </nav>
 
