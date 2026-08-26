@@ -72,9 +72,10 @@
       display: flex;
       background: var(--secondary);
       padding: 6px 16px 0;
-      gap: 4px;
+      gap: 3px;
     }
     .tab {
+      flex: 1;
       background: rgba(0,0,0,0.12);
       border: none;
       border-radius: 8px 8px 0 0;
@@ -156,7 +157,7 @@
       transition: background 0.15s;
     }
     .today-btn:hover { background: rgba(255,255,255,0.28); }
-
+    #open-cal { font-size: 1.4rem; }
     /* ── Layout ───────────────────────────────────────────────────────── */
     .content {
       max-width: 600px;
@@ -649,8 +650,11 @@
   </header>
 
   <div class="tab-bar" role="tablist">
-    <button class="tab active" role="tab" data-tab="day" aria-selected="true">Day</button>
-    <button class="tab" role="tab" data-tab="week" aria-selected="false">Week</button>
+    <button class="tab active" role="tab" data-tab="day"     aria-selected="true" >Day</button>
+    <button class="tab"        role="tab" data-tab="week"    aria-selected="false">Week</button>
+    <button class="tab"        role="tab" data-tab="notes"   aria-selected="false">Notes</button>
+    <button class="tab"        role="tab" data-tab="archive" aria-selected="false">Archive</button>
+    <button class="tab"        role="tab" data-tab="settings" aria-selected="false">Settings</button>
   </div>
 
   <div id="panel-day" class="tab-panel">
@@ -759,6 +763,33 @@
       <div class="card" style="margin-top:14px">
         <div class="card-title">Week View</div>
         <p class="empty-state" style="padding:20px 0">Weekly overview coming in v0.2 — stay tuned.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-notes" class="tab-panel" style="display:none" role="tabpanel">
+    <div class="content">
+      <div class="card" style="margin-top:14px">
+        <div class="card-title">Notes</div>
+        <p class="empty-state" style="padding:20px 0">Cross-day notes coming soon.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-archive" class="tab-panel" style="display:none" role="tabpanel">
+    <div class="content">
+      <div class="card" style="margin-top:14px">
+        <div class="card-title">Archive</div>
+        <p class="empty-state" style="padding:20px 0">Completed tasks archive coming soon.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-settings" class="tab-panel" style="display:none" role="tabpanel">
+    <div class="content">
+      <div class="card" style="margin-top:14px">
+        <div class="card-title">Settings</div>
+        <p class="empty-state" style="padding:20px 0">App settings coming soon.</p>
       </div>
     </div>
   </div>
