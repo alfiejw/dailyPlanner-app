@@ -420,6 +420,9 @@
       cursor: pointer;
       padding: 2px 8px;
       transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
     .btn-remove-due:hover { background: #f4eafc; color: var(--primary); border-color: var(--primary); }
 
@@ -827,7 +830,7 @@
           <span id="due-preview-time"></span>
           <span class="due-preview-date" id="due-preview-date"></span>
         </div>
-        <button class="btn-remove-due" id="remove-due-btn" aria-label="Remove due date" style="display:none">&larr; Remove</button>
+        <button class="btn-remove-due" id="remove-due-btn" aria-label="Remove due date" style="display:none">&#11013; Remove</button>
       </div>
       <input type="datetime-local" id="due-picker" aria-label="Due date and time"
         style="position:fixed;opacity:0;pointer-events:none;width:0;height:0" />
@@ -922,9 +925,9 @@
         <div class="card">
           <div class="card-title">Data Backup</div>
           <div class="backup-actions">
-            <button class="btn-backup" id="export-btn">Export backup &#8675;</button>
+            <button class="btn-backup" id="export-btn">Export backup &#11015;</button>
             <input type="file" id="import-input" accept=".json" style="display:none" />
-            <button class="btn-backup" id="import-btn">Import backup &#8673;</button>
+            <button class="btn-backup" id="import-btn">Import backup &#11014;</button>
           </div>
         </div>
       </div>
@@ -966,7 +969,7 @@
           <span id="edit-due-time"></span>
           <span class="due-preview-date" id="edit-due-date"></span>
         </div>
-        <button class="btn-remove-due" id="edit-remove-due-btn" aria-label="Remove due date" style="display:none">&larr; Remove</button>
+        <button class="btn-remove-due" id="edit-remove-due-btn" aria-label="Remove due date" style="display:none">&#11013; Remove</button>
       </div>
       <input type="datetime-local" id="edit-due-picker"
         style="position:fixed;opacity:0;pointer-events:none;width:0;height:0" />
@@ -1667,6 +1670,7 @@
           th.textContent = `${DAY_NAMES[row]} - ${weekDays[row].getDate()} - ${weekDays[row].toLocaleDateString('en-GB',{month:'short'})}`;
           th.style.cursor = 'pointer';
           th.title = 'Open in Day tab';
+          if (toKey(weekDays[row]) === toKey(now)) th.style.background = '#7050a8';
           th.addEventListener('click', () => {
             currentDate = new Date(weekDays[row]);
             document.querySelectorAll('.tab').forEach(t => {
