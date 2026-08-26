@@ -163,6 +163,7 @@
     .today-btn:hover { background: rgba(255,255,255,0.28); }
     #open-cal { font-size: 1.1rem; }
     [data-tab="settings"] { font-size: 1.2rem; }
+    [data-tab="bin"]      { font-size: 1.2rem; }
     /* ── Layout ───────────────────────────────────────────────────────── */
     .content {
       max-width: 600px;
@@ -633,6 +634,31 @@
       word-break: break-word;
     }
 
+    .bin-subtab-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .bin-subtab {
+      flex: 1;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 5px 8px;
+      text-transform: uppercase;
+      transition: all 0.15s;
+    }
+    .bin-subtab.active { background: var(--secondary); border-color: var(--secondary); color: #fff; }
+    .bin-item { display: flex; flex-direction: column; gap: 3px; }
+    .bin-item-meta { font-size: 0.68rem; color: var(--text-muted); }
+    .bin-item-text { font-size: 0.88rem; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+
     /* ── Backup actions row ───────────────────────────────────────────── */
     .backup-actions {
       display: flex;
@@ -682,7 +708,7 @@
     <button class="tab active" role="tab" data-tab="day"     aria-selected="true" >Day</button>
     <button class="tab"        role="tab" data-tab="week"    aria-selected="false">Week</button>
     <button class="tab"        role="tab" data-tab="notes"   aria-selected="false">Notes</button>
-    <button class="tab"        role="tab" data-tab="archive"  aria-selected="false">Old</button>
+    <button class="tab"        role="tab" data-tab="bin"      aria-selected="false">&#9851;</button>
     <button class="tab"        role="tab" data-tab="settings" aria-selected="false">&#9881;</button>
   </div>
 
@@ -773,15 +799,7 @@
       ></textarea>
     </div>
 
-    <!-- Data backup -->
-    <div class="card">
-      <div class="card-title">Data Backup</div>
-      <div class="backup-actions">
-        <button class="btn-backup" id="export-btn">Export backup &#8675;</button>
-        <input type="file" id="import-input" accept=".json" style="display:none" />
-        <button class="btn-backup" id="import-btn">Import backup &#8673;</button>
-      </div>
-    </div>
+    <!-- Data backup moved to Settings tab -->
 
   </main>
 
@@ -798,24 +816,34 @@
 
   <div id="panel-notes" class="tab-panel" style="display:none" role="tabpanel">
     <div class="content" style="padding-top:14px">
+      <div class="card-header-row" style="padding-bottom:10px">
+        <div class="card-title">All Notes</div>
+        <button class="btn-ghost" id="delete-old-notes-btn">Delete old &#128465;</button>
+      </div>
       <div id="notes-list"></div>
     </div>
   </div>
 
-  <div id="panel-archive" class="tab-panel" style="display:none" role="tabpanel">
-    <div class="content">
-      <div class="card" style="margin-top:14px">
-        <div class="card-title">Old Tasks</div>
-        <p class="empty-state" style="padding:20px 0">Completed tasks archive coming soon.</p>
+  <div id="panel-bin" class="tab-panel" style="display:none" role="tabpanel">
+    <div class="content" style="padding-top:14px">
+      <div class="bin-subtab-bar">
+        <button class="bin-subtab active" data-bin="completed">Completed</button>
+        <button class="bin-subtab"        data-bin="deleted">Deleted</button>
+        <button class="bin-subtab"        data-bin="notes">Notes</button>
       </div>
+      <div id="bin-list"></div>
     </div>
   </div>
 
   <div id="panel-settings" class="tab-panel" style="display:none" role="tabpanel">
-    <div class="content">
-      <div class="card" style="margin-top:14px">
-        <div class="card-title">Settings</div>
-        <p class="empty-state" style="padding:20px 0">App settings coming soon.</p>
+    <div class="content" style="padding-top:14px">
+      <div class="card">
+        <div class="card-title">Data Backup</div>
+        <div class="backup-actions">
+          <button class="btn-backup" id="export-btn">Export backup &#8675;</button>
+          <input type="file" id="import-input" accept=".json" style="display:none" />
+          <button class="btn-backup" id="import-btn">Import backup &#8673;</button>
+        </div>
       </div>
     </div>
   </div>
@@ -915,6 +943,8 @@
     // ── Storage ───────────────────────────────────────────────────────────────
 
     const STORAGE_KEY  = 'plannerData';
+    const BIN_KEY      = 'jessBoardBin';
+    const SWEEP_KEY    = 'jessBoardLastSweep';
     const APP_VERSION  = '0.2';
 
     function loadAll() {
@@ -925,6 +955,13 @@
     function saveAll(data) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
+
+    function loadBin() {
+      try { return JSON.parse(localStorage.getItem(BIN_KEY)) || { completed: [], deleted: [], notes: [] }; }
+      catch { return { completed: [], deleted: [], notes: [] }; }
+    }
+
+    function saveBin(bin) { localStorage.setItem(BIN_KEY, JSON.stringify(bin)); }
 
     function getDayData(key) {
       return loadAll()[key] || { tasks: [], notes: '' };
@@ -1224,8 +1261,14 @@
     }
 
     function deleteTask(id) {
-      const key = toKey(currentDate);
-      const day = getDayData(key);
+      const key  = toKey(currentDate);
+      const day  = getDayData(key);
+      const task = day.tasks.find(t => t.id === id);
+      if (task) {
+        const bin = loadBin();
+        bin.deleted.push({ ...task, date: key, deletedAt: new Date().toISOString() });
+        saveBin(bin);
+      }
       day.tasks = day.tasks.filter(t => t.id !== id);
       saveDayData(key, day);
       renderTasks(day.tasks);
@@ -1236,6 +1279,10 @@
       const day = getDayData(key);
       if (!day.tasks.some(t => t.done)) return;
       if (!confirm('Remove all completed tasks?')) return;
+      const bin  = loadBin();
+      const done = day.tasks.filter(t => t.done);
+      done.forEach(t => bin.completed.push({ ...t, date: key, addedAt: new Date().toISOString() }));
+      saveBin(bin);
       day.tasks = day.tasks.filter(t => !t.done);
       saveDayData(key, day);
       renderTasks(day.tasks);
@@ -1432,8 +1479,11 @@
           p.style.display = p.id === `panel-${name}` ? '' : 'none';
         });
         if (name === 'notes') renderNotesTab();
+        if (name === 'bin')   renderBinTab();
       });
     });
+
+    checkSundaySweep();
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -1523,9 +1573,106 @@
       if (!confirm('Delete this note? This cannot be undone.')) return;
       if (!editingNoteKey) return;
       const all = loadAll();
-      if (all[editingNoteKey]) { all[editingNoteKey].notes = ''; saveAll(all); }
+      if (all[editingNoteKey]?.notes?.trim()) {
+        const bin = loadBin();
+        bin.notes.push({ date: editingNoteKey, text: all[editingNoteKey].notes, deletedAt: new Date().toISOString() });
+        saveBin(bin);
+        all[editingNoteKey].notes = '';
+        saveAll(all);
+      }
       closeNoteEditor();
       renderNotesTab();
+    });
+
+    // ── Bin tab ───────────────────────────────────────────────────────────────
+
+    let activeBinSubtab = 'completed';
+
+    function renderBinTab(sub) {
+      if (sub) activeBinSubtab = sub;
+      document.querySelectorAll('.bin-subtab').forEach(b => {
+        b.classList.toggle('active', b.dataset.bin === activeBinSubtab);
+      });
+      const list = document.getElementById('bin-list');
+      list.innerHTML = '';
+      const bin = loadBin();
+      const items = bin[activeBinSubtab] || [];
+      if (!items.length) {
+        list.innerHTML = '<p class="empty-state" style="padding:20px 0">Nothing here yet.</p>';
+        return;
+      }
+      if (activeBinSubtab === 'notes') {
+        items.slice().reverse().forEach(item => {
+          const card = document.createElement('div'); card.className = 'card'; card.style.marginBottom = '10px';
+          const d = new Date(item.date + 'T00:00:00');
+          const meta = document.createElement('div'); meta.className = 'bin-item-meta';
+          meta.textContent = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+          const txt = document.createElement('p'); txt.className = 'bin-item-text'; txt.textContent = item.text;
+          card.append(meta, txt); list.appendChild(card);
+        });
+      } else {
+        items.slice().reverse().forEach(item => {
+          const card = document.createElement('div'); card.className = 'card'; card.style.marginBottom = '10px';
+          const d = new Date((item.date || toKey(new Date())) + 'T00:00:00');
+          const meta = document.createElement('div'); meta.className = 'bin-item-meta';
+          meta.textContent = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+          const badge = document.createElement('span');
+          const p = item.priority || 'normal';
+          badge.className = `priority-badge p-${p}`; badge.textContent = p === 'normal' ? 'NORM' : p;
+          const txt = document.createElement('span'); txt.className = 'bin-item-text'; txt.textContent = item.text;
+          const row = document.createElement('div'); row.className = 'bin-item';
+          const badgeRow = document.createElement('div'); badgeRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:4px';
+          badgeRow.append(badge, txt);
+          row.append(meta, badgeRow);
+          card.appendChild(row); list.appendChild(card);
+        });
+      }
+    }
+
+    // ── Sunday midnight sweep ───────────────────────────────────────────────────
+
+    function checkSundaySweep() {
+      const now = new Date();
+      const d = new Date(now);
+      d.setDate(d.getDate() - d.getDay()); // rewind to this week's Sunday
+      d.setHours(0, 0, 0, 0);
+      const thisSundayKey = toKey(d);
+      if ((localStorage.getItem(SWEEP_KEY) || '') >= thisSundayKey) return;
+
+      const todayKey = toKey(now);
+      const all = loadAll();
+      const bin = loadBin();
+      let changed = false;
+      Object.keys(all).forEach(key => {
+        if (key >= todayKey) return;
+        const done = all[key].tasks.filter(t => t.done);
+        if (!done.length) return;
+        done.forEach(t => bin.completed.push({ ...t, date: key, addedAt: now.toISOString() }));
+        all[key].tasks = all[key].tasks.filter(t => !t.done);
+        changed = true;
+      });
+      if (changed) { saveAll(all); saveBin(bin); }
+      localStorage.setItem(SWEEP_KEY, thisSundayKey);
+    }
+
+    function deleteOldNotes() {
+      const todayKey = toKey(new Date());
+      const all = loadAll();
+      const bin = loadBin();
+      const old = Object.keys(all).filter(k => k < todayKey && all[k].notes?.trim());
+      if (!old.length) { alert('No old notes to delete.'); return; }
+      if (!confirm(`Delete notes from ${old.length} day(s) before today? They will be moved to the Bin.`)) return;
+      old.forEach(k => {
+        bin.notes.push({ date: k, text: all[k].notes, deletedAt: new Date().toISOString() });
+        all[k].notes = '';
+      });
+      saveAll(all); saveBin(bin);
+      renderNotesTab();
+    }
+
+    document.getElementById('delete-old-notes-btn').addEventListener('click', deleteOldNotes);
+    document.querySelectorAll('.bin-subtab').forEach(b => {
+      b.addEventListener('click', () => renderBinTab(b.dataset.bin));
     });
 
     // ── Network status ────────────────────────────────────────────────────────
