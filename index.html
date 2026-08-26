@@ -110,6 +110,9 @@
       text-transform: uppercase;
       transition: background 0.15s, color 0.15s;
       white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .tab.active { background: var(--bg); color: var(--secondary); }
     .tab:not(.active):hover { background: rgba(255,255,255,0.2); color: #fff; }
@@ -181,8 +184,7 @@
     }
     .today-btn:hover { background: rgba(255,255,255,0.28); }
     #open-cal, #week-open-cal { font-size: 1.1rem; }
-    [data-tab="settings"] { font-size: 1.2rem; }
-    [data-tab="bin"]      { font-size: 1.3rem; }
+    [data-tab="settings"] { font-size: 1.6rem; }
     /* ── Layout ───────────────────────────────────────────────────────── */
     .content {
       max-width: 600px;
@@ -656,17 +658,17 @@
     .bin-subtab-bar {
       display: flex;
       gap: 6px;
-      margin-bottom: 12px;
+      margin: 12px 14px 0;
     }
     .bin-subtab {
       flex: 1;
       background: none;
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: var(--radius);
       color: var(--text-muted);
       cursor: pointer;
       font-family: inherit;
-      font-size: 0.72rem;
+      font-size: 0.85rem;
       font-weight: 700;
       letter-spacing: 0.06em;
       padding: 5px 8px;
@@ -674,7 +676,9 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      justify-content: center;
+      gap: 3px;
+      min-height: 62px;
       transition: all 0.15s;
     }
     .bin-checkbox {
@@ -689,7 +693,7 @@
 
     .bin-subtab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
     .bin-subtab-desc {
-      font-size: 0.58rem;
+      font-size: 0.7rem;
       font-weight: 400;
       letter-spacing: 0;
       text-transform: none;
@@ -765,7 +769,7 @@
     <button class="tab active" role="tab" data-tab="day"     aria-selected="true" >Day</button>
     <button class="tab"        role="tab" data-tab="week"    aria-selected="false">Week</button>
     <button class="tab"        role="tab" data-tab="notes"   aria-selected="false">Notes</button>
-    <button class="tab"        role="tab" data-tab="bin"      aria-selected="false">&#x267A;</button>
+    <button class="tab"        role="tab" data-tab="bin"      aria-selected="false"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1.8em" height="1.8em" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9.5" y="2" width="5" height="2" rx="0.8"/><rect x="3.5" y="5" width="17" height="2.2" rx="1.1"/><path d="M5.5 7.2 L6.8 20.6 a1.2 1.2 0 0 0 1.2 1.1 h8 a1.2 1.2 0 0 0 1.2-1.1 L18.5 7.2"/><line x1="10" y1="10.5" x2="9.5" y2="18.5"/><line x1="12" y1="10.5" x2="12" y2="18.5"/><line x1="14" y1="10.5" x2="14.5" y2="18.5"/></svg></button>
     <button class="tab"        role="tab" data-tab="settings" aria-selected="false">&#9881;</button>
   </div>
 
@@ -884,7 +888,7 @@
 
   <div id="panel-notes" class="tab-panel" style="display:none" role="tabpanel">
     <div class="panel-fixed" style="padding:14px 14px 8px">
-      <div class="card-header-row" style="padding-bottom:3px">
+      <div class="card-header-row" style="padding-bottom:1px">
         <div class="card-title" style="margin-bottom:0;font-size:0.9rem">All Notes</div>
         <button class="btn-ghost" id="delete-old-notes-btn">Delete old &#128465;</button>
       </div>
@@ -896,13 +900,13 @@
   </div>
 
   <div id="panel-bin" class="tab-panel" style="display:none" role="tabpanel">
-    <div class="panel-fixed" style="padding:14px 14px 8px">
+    <div class="panel-fixed" style="padding:0 0 8px">
       <div class="bin-subtab-bar">
         <button class="bin-subtab active" data-bin="completed">Completed<span class="bin-subtab-desc">auto-cleared weekly</span></button>
         <button class="bin-subtab"        data-bin="deleted">Deleted<span class="bin-subtab-desc">manually removed</span></button>
         <button class="bin-subtab"        data-bin="notes">Notes<span class="bin-subtab-desc">cleared notes</span></button>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:6px;padding-bottom:4px">
+      <div style="display:flex;justify-content:flex-end;gap:6px;padding:4px 14px 0">
         <button class="btn-ghost" id="bin-select-all">Select all</button>
         <button class="btn-ghost" id="bin-clear-selected">Clear selected &#x1F525;</button>
       </div>
