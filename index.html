@@ -7,10 +7,10 @@
   <meta name="description" content="A simple daily task planner that works offline." />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Daily Planner" />
+  <meta name="apple-mobile-web-app-title" content="JessBoard" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon.svg" />
-  <title>Daily Planner</title>
+  <title>JessBoard</title>
   <link
     href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto+Slab:wght@400;700&display=swap"
     rel="stylesheet"
@@ -43,8 +43,8 @@
     .app-header {
       background: var(--primary);
       color: #fff;
-      padding: env(safe-area-inset-top, 0) 20px 18px;
-      padding-top: max(env(safe-area-inset-top, 0px), 20px);
+      padding: env(safe-area-inset-top, 0) 20px 10px;
+      padding-top: max(env(safe-area-inset-top, 0px), 16px);
       text-align: center;
     }
 
@@ -56,7 +56,7 @@
       line-height: 1.1;
     }
 
-    .app-header h1 .word-planner { color: rgba(255,255,255,0.72); }
+    .app-header h1 .word-board { color: rgba(255,255,255,0.72); }
 
     .date-display {
       margin-top: 5px;
@@ -66,6 +66,30 @@
       text-transform: uppercase;
       opacity: 0.85;
     }
+
+    /* ── Tab bar ──────────────────────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      background: var(--secondary);
+      padding: 6px 16px 0;
+      gap: 4px;
+    }
+    .tab {
+      background: rgba(0,0,0,0.12);
+      border: none;
+      border-radius: 8px 8px 0 0;
+      color: rgba(255,255,255,0.65);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 7px 24px 8px;
+      text-transform: uppercase;
+      transition: background 0.15s, color 0.15s;
+    }
+    .tab.active { background: var(--bg); color: var(--secondary); }
+    .tab:not(.active):hover { background: rgba(255,255,255,0.2); color: #fff; }
 
     /* ── Day navigation ───────────────────────────────────────────────── */
     .day-nav {
@@ -618,10 +642,16 @@
 <body>
 
   <header class="app-header">
-    <h1>Daily <span class="word-planner">Planner</span></h1>
+    <h1>Jess<span class="word-board">Board</span></h1>
     <div class="date-display" id="full-date"></div>
   </header>
 
+  <div class="tab-bar" role="tablist">
+    <button class="tab active" role="tab" data-tab="day" aria-selected="true">Day</button>
+    <button class="tab" role="tab" data-tab="week" aria-selected="false">Week</button>
+  </div>
+
+  <div id="panel-day" class="tab-panel">
   <nav class="day-nav" aria-label="Day navigation">
     <div class="nav-side">
       <button class="today-btn" id="open-cal" aria-label="Pick a date">&#128197;</button>
@@ -720,6 +750,17 @@
 
   </main>
 
+  </div><!-- /panel-day -->
+
+  <div id="panel-week" class="tab-panel" style="display:none" role="tabpanel">
+    <div class="content">
+      <div class="card" style="margin-top:14px">
+        <div class="card-title">Week View</div>
+        <p class="empty-state" style="padding:20px 0">Weekly overview coming in v0.2 — stay tuned.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Edit task modal -->
   <div class="modal-overlay hidden" id="edit-modal" role="dialog" aria-modal="true" aria-label="Edit task">
     <div class="modal-card">
@@ -752,7 +793,7 @@
   </div>
 
   <footer class="app-footer">
-    <span>Daily Planner v<span id="ver"></span> &nbsp;<span class="network-badge" id="network-badge"></span></span>
+    <span>JessBoard v<span id="ver"></span> &nbsp;<span class="network-badge" id="network-badge"></span></span>
   </footer>
 
   <script>
@@ -800,7 +841,7 @@
     // ── Storage ───────────────────────────────────────────────────────────────
 
     const STORAGE_KEY  = 'plannerData';
-    const APP_VERSION  = '0.1';
+    const APP_VERSION  = '0.2';
 
     function loadAll() {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -1305,6 +1346,19 @@
     updateNetworkBadge();
     document.getElementById('ver').textContent = APP_VERSION;
     navigator.storage?.persist?.();
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const name = tab.dataset.tab;
+        document.querySelectorAll('.tab').forEach(t => {
+          t.classList.toggle('active', t.dataset.tab === name);
+          t.setAttribute('aria-selected', t.dataset.tab === name);
+        });
+        document.querySelectorAll('.tab-panel').forEach(p => {
+          p.style.display = p.id === `panel-${name}` ? '' : 'none';
+        });
+      });
+    });
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

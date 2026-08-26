@@ -1,11 +1,11 @@
 {
-  "name": "Daily Planner",
-  "short_name": "Planner",
-  "description": "A simple daily task planner that works offline.",
+  "name": "JessBoard",
+  "short_name": "JessBoard",
+  "description": "A personal daily and weekly planner that works offline.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f4e4e4",
-  "theme_color": "#AD6C6D",
+  "background_color": "#f7f2fa",
+  "theme_color": "#d4a0bc",
   "orientation": "portrait-primary",
   "categories": ["productivity", "utilities"],
   "icons": [
