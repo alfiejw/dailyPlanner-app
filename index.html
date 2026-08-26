@@ -76,18 +76,22 @@
     }
     .tab {
       flex: 1;
+      min-width: 0;
       background: rgba(0,0,0,0.12);
       border: none;
       border-radius: 8px 8px 0 0;
       color: rgba(255,255,255,0.65);
       cursor: pointer;
       font-family: inherit;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 700;
-      letter-spacing: 0.08em;
-      padding: 7px 24px 8px;
+      letter-spacing: 0.04em;
+      overflow: hidden;
+      padding: 7px 4px 8px;
+      text-overflow: ellipsis;
       text-transform: uppercase;
       transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
     }
     .tab.active { background: var(--bg); color: var(--secondary); }
     .tab:not(.active):hover { background: rgba(255,255,255,0.2); color: #fff; }
@@ -157,7 +161,8 @@
       transition: background 0.15s;
     }
     .today-btn:hover { background: rgba(255,255,255,0.28); }
-    #open-cal { font-size: 1.4rem; }
+    #open-cal { font-size: 1.1rem; }
+    [data-tab="settings"] { font-size: 1.2rem; }
     /* ── Layout ───────────────────────────────────────────────────────── */
     .content {
       max-width: 600px;
@@ -653,8 +658,8 @@
     <button class="tab active" role="tab" data-tab="day"     aria-selected="true" >Day</button>
     <button class="tab"        role="tab" data-tab="week"    aria-selected="false">Week</button>
     <button class="tab"        role="tab" data-tab="notes"   aria-selected="false">Notes</button>
-    <button class="tab"        role="tab" data-tab="archive" aria-selected="false">Archive</button>
-    <button class="tab"        role="tab" data-tab="settings" aria-selected="false">Settings</button>
+    <button class="tab"        role="tab" data-tab="archive"  aria-selected="false">Old</button>
+    <button class="tab"        role="tab" data-tab="settings" aria-selected="false">&#9881;</button>
   </div>
 
   <div id="panel-day" class="tab-panel">
@@ -779,7 +784,7 @@
   <div id="panel-archive" class="tab-panel" style="display:none" role="tabpanel">
     <div class="content">
       <div class="card" style="margin-top:14px">
-        <div class="card-title">Archive</div>
+        <div class="card-title">Old Tasks</div>
         <p class="empty-state" style="padding:20px 0">Completed tasks archive coming soon.</p>
       </div>
     </div>
