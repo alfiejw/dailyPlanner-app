@@ -83,7 +83,7 @@
     .tab-panel .day-nav { flex-shrink: 0; }
 
     /* Week scroll area fills its panel when tab-panel is flex */
-    #panel-week .week-scroll-area { flex: 1; height: auto; margin-top: 0; }
+    #panel-week .week-scroll-area { flex: 1; height: auto; margin-top: 8px; }
 
     /* ── Tab bar ──────────────────────────────────────────────────────── */
     .tab-bar {
@@ -123,6 +123,7 @@
       padding: 10px 16px;
       margin: 12px 14px 0;
       border-radius: var(--radius);
+      min-height: 62px;
     }
 
     .nav-center {
@@ -686,7 +687,7 @@
     .bin-card-row { display: flex; align-items: flex-start; gap: 10px; }
     .bin-card-content { flex: 1; min-width: 0; }
 
-    .bin-subtab.active { background: #9878b8; border-color: #9878b8; color: #fff; }
+    .bin-subtab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
     .bin-subtab-desc {
       font-size: 0.58rem;
       font-weight: 400;
@@ -882,11 +883,12 @@
   </div>
 
   <div id="panel-notes" class="tab-panel" style="display:none" role="tabpanel">
-    <div class="panel-fixed" style="padding:14px 14px 0">
-      <div class="card-header-row" style="padding-bottom:10px">
-        <div class="card-title" style="margin-bottom:0">All Notes</div>
+    <div class="panel-fixed" style="padding:14px 14px 8px">
+      <div class="card-header-row" style="padding-bottom:3px">
+        <div class="card-title" style="margin-bottom:0;font-size:0.9rem">All Notes</div>
         <button class="btn-ghost" id="delete-old-notes-btn">Delete old &#128465;</button>
       </div>
+      <div style="height:3px;background:var(--primary);border-radius:2px"></div>
     </div>
     <div class="panel-scroll" style="padding:0 14px 20px">
       <div id="notes-list"></div>
@@ -894,7 +896,7 @@
   </div>
 
   <div id="panel-bin" class="tab-panel" style="display:none" role="tabpanel">
-    <div class="panel-fixed" style="padding:14px 14px 0">
+    <div class="panel-fixed" style="padding:14px 14px 8px">
       <div class="bin-subtab-bar">
         <button class="bin-subtab active" data-bin="completed">Completed<span class="bin-subtab-desc">auto-cleared weekly</span></button>
         <button class="bin-subtab"        data-bin="deleted">Deleted<span class="bin-subtab-desc">manually removed</span></button>
@@ -1659,6 +1661,22 @@
         const th = document.createElement('th');
         if (row < 7) {
           th.textContent = `${DAY_NAMES[row]} - ${weekDays[row].getDate()} - ${weekDays[row].toLocaleDateString('en-GB',{month:'short'})}`;
+          th.style.cursor = 'pointer';
+          th.title = 'Open in Day tab';
+          th.addEventListener('click', () => {
+            currentDate = new Date(weekDays[row]);
+            document.querySelectorAll('.tab').forEach(t => {
+              t.classList.toggle('active', t.dataset.tab === 'day');
+              t.setAttribute('aria-selected', t.dataset.tab === 'day');
+            });
+            document.querySelectorAll('.tab-panel').forEach(p => {
+              p.style.display = p.id === 'panel-day' ? 'flex' : 'none';
+            });
+            pendingDue = getDefaultDue();
+            document.getElementById('due-picker').value = pendingDue;
+            updateDueDisplay();
+            render();
+          });
         } else {
           th.textContent = 'Anytime';
         }
