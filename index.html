@@ -345,8 +345,8 @@
     }
     .due-bubble { background: #fffce0; }
     .due-icon { font-size: 0.85rem; line-height: 1; flex-shrink: 0; }
-    .due-time { font-size: 0.7rem;  font-weight: 700; color: var(--text); }
-    .due-date { font-size: 0.62rem; color: var(--text-muted); }
+    .due-time { font-size: 0.9rem;  font-weight: 700; color: var(--text); }
+    .due-date { font-size: 0.9rem; color: var(--text-muted); }
     .task-item.done .due-time,
     .task-item.done .due-date { color: var(--text-muted); }
 
@@ -787,7 +787,7 @@
           <span id="due-preview-time"></span>
           <span class="due-preview-date" id="due-preview-date"></span>
         </div>
-        <button class="btn-remove-due" id="remove-due-btn" aria-label="Remove due date" style="display:none">Remove</button>
+        <button class="btn-remove-due" id="remove-due-btn" aria-label="Remove due date" style="display:none">&larr; Remove</button>
       </div>
       <input type="datetime-local" id="due-picker" aria-label="Due date and time"
         style="position:fixed;opacity:0;pointer-events:none;width:0;height:0" />
@@ -852,7 +852,7 @@
         <button class="bin-subtab"        data-bin="deleted">Deleted<span class="bin-subtab-desc">manually removed</span></button>
         <button class="bin-subtab"        data-bin="notes">Notes<span class="bin-subtab-desc">cleared notes</span></button>
       </div>
-      <div class="card-header-row" style="padding-bottom:10px">
+      <div style="display:flex;justify-content:flex-end;gap:6px;padding-bottom:4px">
         <button class="btn-ghost" id="bin-select-all">Select all</button>
         <button class="btn-ghost" id="bin-clear-selected">Clear selected &#x1F525;</button>
       </div>
@@ -908,7 +908,7 @@
           <span id="edit-due-time"></span>
           <span class="due-preview-date" id="edit-due-date"></span>
         </div>
-        <button class="btn-remove-due" id="edit-remove-due-btn" aria-label="Remove due date" style="display:none">Remove</button>
+        <button class="btn-remove-due" id="edit-remove-due-btn" aria-label="Remove due date" style="display:none">&larr; Remove</button>
       </div>
       <input type="datetime-local" id="edit-due-picker"
         style="position:fixed;opacity:0;pointer-events:none;width:0;height:0" />
@@ -957,6 +957,13 @@
 
     function formatDueDate(iso) {
       return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    }
+
+    function getDefaultDue() {
+      const d = new Date();
+      d.setHours(d.getHours() + 1, 0, 0, 0);
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:00`;
     }
 
     function shiftDay(d, n) {
@@ -1268,8 +1275,8 @@
       saveDayData(key, day);
 
       input.value = '';
-      pendingDue = '';
-      document.getElementById('due-picker').value = '';
+      pendingDue = getDefaultDue();
+      document.getElementById('due-picker').value = pendingDue;
       updateDueDisplay();
       input.focus();
       render();
@@ -1429,7 +1436,7 @@
     });
     document.getElementById('edit-open-due-btn').addEventListener('click', () => {
       const now = new Date();
-      now.setMinutes(Math.ceil((now.getMinutes() + 1) / 30) * 30, 0, 0);
+      now.setHours(now.getHours() + 1, 0, 0, 0);
       const pad = n => String(n).padStart(2, '0');
       if (!editDuePicker.value) {
         editDuePicker.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -1455,7 +1462,7 @@
     document.getElementById('open-due-btn').addEventListener('click', () => {
       // Always pre-fill so confirming without editing still commits the value
       const now = new Date();
-      now.setMinutes(Math.ceil((now.getMinutes() + 1) / 30) * 30, 0, 0);
+      now.setHours(now.getHours() + 1, 0, 0, 0);
       const pad = n => String(n).padStart(2, '0');
       if (!duePicker.value) {
         duePicker.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -1492,6 +1499,9 @@
     updateNetworkBadge();
     document.getElementById('ver').textContent = APP_VERSION;
     navigator.storage?.persist?.();
+    pendingDue = getDefaultDue();
+    document.getElementById('due-picker').value = pendingDue;
+    updateDueDisplay();
 
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -1505,6 +1515,11 @@
         });
         if (name === 'notes') renderNotesTab();
         if (name === 'bin')   renderBinTab();
+        if (name === 'day') {
+          pendingDue = getDefaultDue();
+          document.getElementById('due-picker').value = pendingDue;
+          updateDueDisplay();
+        }
       });
     });
 
