@@ -163,7 +163,7 @@
     .today-btn:hover { background: rgba(255,255,255,0.28); }
     #open-cal { font-size: 1.1rem; }
     [data-tab="settings"] { font-size: 1.2rem; }
-    [data-tab="bin"]      { font-size: 1.2rem; }
+    [data-tab="bin"]      { font-size: 1.3rem; }
     /* ── Layout ───────────────────────────────────────────────────────── */
     .content {
       max-width: 600px;
@@ -652,9 +652,30 @@
       letter-spacing: 0.06em;
       padding: 5px 8px;
       text-transform: uppercase;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
       transition: all 0.15s;
     }
-    .bin-subtab.active { background: var(--secondary); border-color: var(--secondary); color: #fff; }
+    .bin-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: #9878b8;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .bin-card-row { display: flex; align-items: flex-start; gap: 10px; }
+    .bin-card-content { flex: 1; min-width: 0; }
+
+    .bin-subtab.active { background: #9878b8; border-color: #9878b8; color: #fff; }
+    .bin-subtab-desc {
+      font-size: 0.58rem;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+      opacity: 0.8;
+    }
     .bin-item { display: flex; flex-direction: column; gap: 3px; }
     .bin-item-meta { font-size: 0.68rem; color: var(--text-muted); }
     .bin-item-text { font-size: 0.88rem; color: var(--text); white-space: pre-wrap; word-break: break-word; }
@@ -708,7 +729,7 @@
     <button class="tab active" role="tab" data-tab="day"     aria-selected="true" >Day</button>
     <button class="tab"        role="tab" data-tab="week"    aria-selected="false">Week</button>
     <button class="tab"        role="tab" data-tab="notes"   aria-selected="false">Notes</button>
-    <button class="tab"        role="tab" data-tab="bin"      aria-selected="false">&#9851;</button>
+    <button class="tab"        role="tab" data-tab="bin"      aria-selected="false">&#x267A;</button>
     <button class="tab"        role="tab" data-tab="settings" aria-selected="false">&#9881;</button>
   </div>
 
@@ -827,9 +848,13 @@
   <div id="panel-bin" class="tab-panel" style="display:none" role="tabpanel">
     <div class="content" style="padding-top:14px">
       <div class="bin-subtab-bar">
-        <button class="bin-subtab active" data-bin="completed">Completed</button>
-        <button class="bin-subtab"        data-bin="deleted">Deleted</button>
-        <button class="bin-subtab"        data-bin="notes">Notes</button>
+        <button class="bin-subtab active" data-bin="completed">Completed<span class="bin-subtab-desc">auto-cleared weekly</span></button>
+        <button class="bin-subtab"        data-bin="deleted">Deleted<span class="bin-subtab-desc">manually removed</span></button>
+        <button class="bin-subtab"        data-bin="notes">Notes<span class="bin-subtab-desc">cleared notes</span></button>
+      </div>
+      <div class="card-header-row" style="padding-bottom:10px">
+        <button class="btn-ghost" id="bin-select-all">Select all</button>
+        <button class="btn-ghost" id="bin-clear-selected">Clear selected &#x1F525;</button>
       </div>
       <div id="bin-list"></div>
     </div>
@@ -1278,7 +1303,7 @@
       const key = toKey(currentDate);
       const day = getDayData(key);
       if (!day.tasks.some(t => t.done)) return;
-      if (!confirm('Remove all completed tasks?')) return;
+      if (!confirm('Remove all completed tasks?\n\nNote: completed tasks from past days are also auto-cleared into the Bin every Sunday at midnight.')) return;
       const bin  = loadBin();
       const done = day.tasks.filter(t => t.done);
       done.forEach(t => bin.completed.push({ ...t, date: key, addedAt: new Date().toISOString() }));
@@ -1595,23 +1620,36 @@
       });
       const list = document.getElementById('bin-list');
       list.innerHTML = '';
-      const bin = loadBin();
+      const bin   = loadBin();
       const items = bin[activeBinSubtab] || [];
       if (!items.length) {
         list.innerHTML = '<p class="empty-state" style="padding:20px 0">Nothing here yet.</p>';
         return;
       }
+
+      const makeCheckbox = idx => {
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.className = 'bin-checkbox'; cb.dataset.idx = idx;
+        return cb;
+      };
+
       if (activeBinSubtab === 'notes') {
-        items.slice().reverse().forEach(item => {
+        items.slice().reverse().forEach((item, di) => {
+          const origIdx = items.length - 1 - di;
           const card = document.createElement('div'); card.className = 'card'; card.style.marginBottom = '10px';
           const d = new Date(item.date + 'T00:00:00');
           const meta = document.createElement('div'); meta.className = 'bin-item-meta';
           meta.textContent = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
           const txt = document.createElement('p'); txt.className = 'bin-item-text'; txt.textContent = item.text;
-          card.append(meta, txt); list.appendChild(card);
+          const content = document.createElement('div'); content.className = 'bin-card-content';
+          content.append(meta, txt);
+          const row = document.createElement('div'); row.className = 'bin-card-row';
+          row.append(content, makeCheckbox(origIdx));
+          card.appendChild(row); list.appendChild(card);
         });
       } else {
-        items.slice().reverse().forEach(item => {
+        items.slice().reverse().forEach((item, di) => {
+          const origIdx = items.length - 1 - di;
           const card = document.createElement('div'); card.className = 'card'; card.style.marginBottom = '10px';
           const d = new Date((item.date || toKey(new Date())) + 'T00:00:00');
           const meta = document.createElement('div'); meta.className = 'bin-item-meta';
@@ -1620,11 +1658,15 @@
           const p = item.priority || 'normal';
           badge.className = `priority-badge p-${p}`; badge.textContent = p === 'normal' ? 'NORM' : p;
           const txt = document.createElement('span'); txt.className = 'bin-item-text'; txt.textContent = item.text;
-          const row = document.createElement('div'); row.className = 'bin-item';
           const badgeRow = document.createElement('div'); badgeRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:4px';
           badgeRow.append(badge, txt);
-          row.append(meta, badgeRow);
-          card.appendChild(row); list.appendChild(card);
+          const binItem = document.createElement('div'); binItem.className = 'bin-item';
+          binItem.append(meta, badgeRow);
+          const content = document.createElement('div'); content.className = 'bin-card-content';
+          content.appendChild(binItem);
+          const cardRow = document.createElement('div'); cardRow.className = 'bin-card-row';
+          cardRow.append(content, makeCheckbox(origIdx));
+          card.appendChild(cardRow); list.appendChild(card);
         });
       }
     }
@@ -1671,6 +1713,21 @@
     }
 
     document.getElementById('delete-old-notes-btn').addEventListener('click', deleteOldNotes);
+    document.getElementById('bin-select-all').addEventListener('click', () => {
+      const boxes = [...document.querySelectorAll('.bin-checkbox')];
+      const allChecked = boxes.every(c => c.checked);
+      boxes.forEach(c => c.checked = !allChecked);
+    });
+    document.getElementById('bin-clear-selected').addEventListener('click', () => {
+      const checked = [...document.querySelectorAll('.bin-checkbox:checked')];
+      if (!checked.length) { alert('No items selected.'); return; }
+      if (!confirm(`Permanently delete ${checked.length} selected item(s)?\n\nThis cannot be undone.`)) return;
+      const selected = new Set(checked.map(c => Number(c.dataset.idx)));
+      const bin = loadBin();
+      bin[activeBinSubtab] = bin[activeBinSubtab].filter((_, i) => !selected.has(i));
+      saveBin(bin);
+      renderBinTab();
+    });
     document.querySelectorAll('.bin-subtab').forEach(b => {
       b.addEventListener('click', () => renderBinTab(b.dataset.bin));
     });
