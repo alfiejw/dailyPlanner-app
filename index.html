@@ -609,6 +609,30 @@
     }
     .notes-textarea:focus { border-color: var(--secondary); }
 
+    .note-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .note-card-date {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .note-card-hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 6px 0 10px;
+    }
+    .note-card-text {
+      font-size: 0.9rem;
+      color: var(--text);
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
     /* ── Backup actions row ───────────────────────────────────────────── */
     .backup-actions {
       display: flex;
@@ -773,11 +797,8 @@
   </div>
 
   <div id="panel-notes" class="tab-panel" style="display:none" role="tabpanel">
-    <div class="content">
-      <div class="card" style="margin-top:14px">
-        <div class="card-title">Notes</div>
-        <p class="empty-state" style="padding:20px 0">Cross-day notes coming soon.</p>
-      </div>
+    <div class="content" style="padding-top:14px">
+      <div id="notes-list"></div>
     </div>
   </div>
 
@@ -795,6 +816,21 @@
       <div class="card" style="margin-top:14px">
         <div class="card-title">Settings</div>
         <p class="empty-state" style="padding:20px 0">App settings coming soon.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Note edit modal -->
+  <div class="modal-overlay hidden" id="note-edit-modal" role="dialog" aria-modal="true" aria-label="Edit note">
+    <div class="modal-card">
+      <div class="modal-title" id="note-edit-date"></div>
+      <textarea class="notes-textarea" id="note-edit-input" maxlength="1000" aria-label="Note text"></textarea>
+      <div class="modal-footer">
+        <button class="btn-modal-delete" id="note-edit-delete">Delete</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn-modal-delete" id="note-edit-cancel" style="color:var(--secondary);border-color:var(--secondary)">Cancel</button>
+          <button class="btn-modal-save"   id="note-edit-save">Save</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1395,6 +1431,7 @@
         document.querySelectorAll('.tab-panel').forEach(p => {
           p.style.display = p.id === `panel-${name}` ? '' : 'none';
         });
+        if (name === 'notes') renderNotesTab();
       });
     });
 
@@ -1405,6 +1442,91 @@
         });
       });
     }
+
+    // ── Notes tab ─────────────────────────────────────────────────────────────
+
+    function renderNotesTab() {
+      const all  = loadAll();
+      const list = document.getElementById('notes-list');
+      list.innerHTML = '';
+
+      const days = Object.keys(all)
+        .filter(k => all[k].notes?.trim())
+        .sort(); // ISO keys sort chronologically
+
+      if (!days.length) {
+        list.innerHTML = '<p class="empty-state" style="padding:20px 0">No notes yet \u2014 add them in the Day view.</p>';
+        return;
+      }
+
+      days.forEach(key => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.marginBottom = '10px';
+
+        const d = new Date(key + 'T00:00:00');
+        const label = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+        const header = document.createElement('div');
+        header.className = 'note-card-header';
+
+        const dateEl = document.createElement('span');
+        dateEl.className = 'note-card-date';
+        dateEl.textContent = label;
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn-edit';
+        editBtn.innerHTML = '<span class="btn-edit-icon">&#x270E;</span>';
+        editBtn.setAttribute('aria-label', `Edit note for ${label}`);
+        editBtn.addEventListener('click', () => openNoteEditor(key));
+
+        const hr  = document.createElement('hr');  hr.className = 'note-card-hr';
+        const txt = document.createElement('p');    txt.className = 'note-card-text';
+        txt.textContent = all[key].notes;
+
+        header.append(dateEl, editBtn);
+        card.append(header, hr, txt);
+        list.appendChild(card);
+      });
+    }
+
+    let editingNoteKey = null;
+
+    function openNoteEditor(key) {
+      editingNoteKey = key;
+      const d = new Date(key + 'T00:00:00');
+      document.getElementById('note-edit-date').textContent =
+        d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      document.getElementById('note-edit-input').value = loadAll()[key]?.notes || '';
+      document.getElementById('note-edit-modal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('note-edit-input').focus(), 50);
+    }
+
+    function closeNoteEditor() {
+      document.getElementById('note-edit-modal').classList.add('hidden');
+      editingNoteKey = null;
+    }
+
+    function saveNoteEdit() {
+      if (!editingNoteKey) return;
+      const all = loadAll();
+      if (!all[editingNoteKey]) all[editingNoteKey] = { tasks: [], notes: '' };
+      all[editingNoteKey].notes = document.getElementById('note-edit-input').value;
+      saveAll(all);
+      closeNoteEditor();
+      renderNotesTab();
+    }
+
+    document.getElementById('note-edit-save').addEventListener('click', saveNoteEdit);
+    document.getElementById('note-edit-cancel').addEventListener('click', closeNoteEditor);
+    document.getElementById('note-edit-delete').addEventListener('click', () => {
+      if (!confirm('Delete this note? This cannot be undone.')) return;
+      if (!editingNoteKey) return;
+      const all = loadAll();
+      if (all[editingNoteKey]) { all[editingNoteKey].notes = ''; saveAll(all); }
+      closeNoteEditor();
+      renderNotesTab();
+    });
 
     // ── Network status ────────────────────────────────────────────────────────
 
