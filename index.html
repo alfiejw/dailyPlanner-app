@@ -57,15 +57,25 @@
       font-weight: 700;
       letter-spacing: 0.02em;
       line-height: 1.1;
+      position: relative;
+      display: inline-block;
     }
 
     .title-logo {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-71%, -75%) rotate(-15deg); /* rotation: change 0deg to rotate logo */
       height: 1.6em;
       width: auto;
-      vertical-align: middle;
-      margin-left: -0.3em;
       filter: invert(1);
       mix-blend-mode: screen;
+    }
+    .title-sep {
+      display: inline-block;
+      width: 0;
+      position: relative;
+      overflow: visible;
     }
 
     .app-header h1 .word-board { color: rgba(255,255,255,0.72); }
@@ -777,7 +787,7 @@
 <body>
 
   <header class="app-header">
-    <h1>Jess<span class="word-board">Board</span><img src="icons/JessBoard_logo_3.png" alt="" class="title-logo" aria-hidden="true" /></h1>
+    <h1>Jess<span style="display:inline-block;width:0.45em"></span><span class="title-sep"><img src="icons/JessBoard_logo_3.png" alt="" class="title-logo" aria-hidden="true" /></span><span class="word-board">Board</span></h1>
     <div class="date-display" id="full-date"></div>
   </header>
 
