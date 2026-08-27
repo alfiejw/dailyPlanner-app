@@ -2,7 +2,7 @@ name: Deploy Dev to GitHub Pages
 
 on:
   push:
-    branches: [pwa/feature/dev]
+    branches: [dev]
   workflow_dispatch:
 
 permissions:

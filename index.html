@@ -7,10 +7,10 @@
   <meta name="description" content="A simple daily task planner that works offline." />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Daily Planner" />
+  <meta name="apple-mobile-web-app-title" content="JessBoard" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon.svg" />
-  <title>Daily Planner</title>
+  <title>JessBoard</title>
   <link
     href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto+Slab:wght@400;700&display=swap"
     rel="stylesheet"
@@ -35,7 +35,10 @@
     body {
       font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg);
-      min-height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
       color: var(--text);
     }
 
@@ -43,8 +46,8 @@
     .app-header {
       background: var(--primary);
       color: #fff;
-      padding: env(safe-area-inset-top, 0) 20px 18px;
-      padding-top: max(env(safe-area-inset-top, 0px), 20px);
+      padding: env(safe-area-inset-top, 0) 20px 10px;
+      padding-top: max(env(safe-area-inset-top, 0px), 16px);
       text-align: center;
     }
 
@@ -56,7 +59,7 @@
       line-height: 1.1;
     }
 
-    .app-header h1 .word-planner { color: rgba(255,255,255,0.72); }
+    .app-header h1 .word-board { color: rgba(255,255,255,0.72); }
 
     .date-display {
       margin-top: 5px;
@@ -67,13 +70,63 @@
       opacity: 0.85;
     }
 
+    .app-header { flex-shrink: 0; }
+    .tab-bar     { flex-shrink: 0; }
+    .app-footer  { flex-shrink: 0; }
+
+    /* Tab panels fill remaining height as scrollable flex columns */
+    .tab-panel { flex: 1; display: none; flex-direction: column; overflow: hidden; min-height: 0; }
+    .panel-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 0; }
+    .panel-fixed  { flex-shrink: 0; }
+
+    /* day-nav and week-nav stay fixed at top of their panels */
+    .tab-panel .day-nav { flex-shrink: 0; }
+
+    /* Week scroll area fills its panel when tab-panel is flex */
+    #panel-week .week-scroll-area { flex: 1; height: auto; margin-top: 8px; }
+
+    /* ── Tab bar ──────────────────────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      background: var(--secondary);
+      padding: 6px 16px 0;
+      gap: 3px;
+    }
+    .tab {
+      flex: 1;
+      min-width: 0;
+      background: rgba(0,0,0,0.12);
+      border: none;
+      border-radius: 8px 8px 0 0;
+      color: rgba(255,255,255,0.65);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      overflow: hidden;
+      padding: 7px 4px 8px;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tab.active { background: var(--bg); color: var(--secondary); }
+    .tab:not(.active):hover { background: rgba(255,255,255,0.2); color: #fff; }
+
     /* ── Day navigation ───────────────────────────────────────────────── */
     .day-nav {
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      background: var(--secondary);
+      background: var(--primary);
       padding: 10px 16px;
+      margin: 12px 14px 0;
+      border-radius: var(--radius);
+      min-height: 62px;
     }
 
     .nav-center {
@@ -130,7 +183,8 @@
       transition: background 0.15s;
     }
     .today-btn:hover { background: rgba(255,255,255,0.28); }
-
+    #open-cal, #week-open-cal { font-size: 1.1rem; }
+    [data-tab="settings"] { font-size: 1.6rem; }
     /* ── Layout ───────────────────────────────────────────────────────── */
     .content {
       max-width: 600px;
@@ -235,7 +289,7 @@
       border: none;
       border-radius: 8px;
       padding: 0 18px;
-      font-size: 1.4rem;
+      font-size: 2rem;
       font-weight: 400;
       line-height: 1;
       cursor: pointer;
@@ -312,8 +366,8 @@
     }
     .due-bubble { background: #fffce0; }
     .due-icon { font-size: 0.85rem; line-height: 1; flex-shrink: 0; }
-    .due-time { font-size: 0.7rem;  font-weight: 700; color: var(--text); }
-    .due-date { font-size: 0.62rem; color: var(--text-muted); }
+    .due-time { font-size: 0.9rem;  font-weight: 700; color: var(--text); }
+    .due-date { font-size: 0.9rem; color: var(--text-muted); }
     .task-item.done .due-time,
     .task-item.done .due-date { color: var(--text-muted); }
 
@@ -366,6 +420,9 @@
       cursor: pointer;
       padding: 2px 8px;
       transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
     .btn-remove-due:hover { background: #f4eafc; color: var(--primary); border-color: var(--primary); }
 
@@ -577,7 +634,83 @@
     }
     .notes-textarea:focus { border-color: var(--secondary); }
 
-    /* ── Backup actions row ───────────────────────────────────────────── */
+    .note-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .note-card-date {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .note-card-hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 6px 0 10px;
+    }
+    .note-card-text {
+      font-size: 0.9rem;
+      color: var(--text);
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .bin-subtab-bar {
+      display: flex;
+      gap: 6px;
+      margin: 12px 14px 0;
+    }
+    .bin-subtab {
+      flex: 1;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 5px 8px;
+      text-transform: uppercase;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      min-height: 62px;
+      transition: all 0.15s;
+    }
+    .btn-clear { color: #b03040; border-color: #e8a0a8; }
+    .btn-clear:hover { background: #ffeaea; color: #b03040; border-color: #b03040; }
+    .btn-select-old { color: #3060a0; border-color: #a8c8e8; }
+    .btn-select-old:hover { background: #e8f0fc; color: #3060a0; border-color: #3060a0; }
+    .note-checkbox { width:18px; height:18px; accent-color:var(--secondary); cursor:pointer; flex-shrink:0; }
+    .bin-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: #9878b8;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .bin-card-content { flex: 1; min-width: 0; }
+
+    .bin-card-row { display: flex; align-items: flex-start; gap: 10px; }
+    .bin-subtab-desc {
+      font-size: 0.7rem;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+      opacity: 0.8;
+    }
+    .bin-subtab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .bin-item-meta { font-size: 0.68rem; color: var(--text-muted); }
+    .bin-item-text { font-size: 0.88rem; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+
+    .bin-item { display: flex; flex-direction: column; gap: 3px; }
     .backup-actions {
       display: flex;
       justify-content: center;
@@ -613,15 +746,41 @@
       .day-label { min-width: 100px; font-size: 0.9rem; }
       .composer select { display: none; }
     }
+    .week-scroll-area { overflow:auto; cursor:grab; touch-action:none; user-select:none; height:calc(100vh - 260px); margin:8px 14px 0; border-radius:var(--radius); }
+    .week-scroll-area.dragging { cursor:grabbing; }
+    .week-tbl { border-collapse:collapse; table-layout:fixed; }
+    .week-tbl th { position:sticky; left:0; z-index:3; width:36px; min-width:36px; padding:10px 4px; background:var(--secondary); color:#fff; font-family:inherit; font-size:0.68rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; text-align:center; white-space:nowrap; writing-mode:vertical-lr; transform:rotate(180deg); border-right:1px solid rgba(255,255,255,0.12); }
+    .week-tbl td { width:136px; min-width:136px; height:136px; min-height:136px; padding:7px 6px; vertical-align:top; word-break:break-word; border-right:1px solid rgba(0,0,0,0.04); border-bottom:1px solid rgba(0,0,0,0.04); }
+    .week-tbl td.c-light { background:var(--bg); color:#3a3248; }
+    .week-tbl td.c-dark  { background:#ead8f4; color:#3a3248; }
+    .week-task { display:flex; flex-direction:column; gap:3px; margin-bottom:6px; font-size:0.82rem; line-height:1.3; }
+    .week-task-text { font-weight:600; color:var(--text); }
+    .week-task-top { display:flex; align-items:center; justify-content:center; gap:4px; }
+    .week-badge { font-size:0.82rem; font-weight:700; text-transform:uppercase; padding:2px 6px; border-radius:6px; flex-shrink:0; }
+    .c-light .week-badge.p-high   { background:#ffd8d8; color:#b03040; }
+    .c-light .week-badge.p-normal { background:#c8e0f8; color:#3060a0; }
+    .c-light .week-badge.p-low    { background:#cceadc; color:#387060; }
+    .c-dark  .week-badge.p-high   { background:#ffd8d8; color:#b03040; }
+    .c-dark  .week-badge.p-normal { background:#c8e0f8; color:#3060a0; }
+    .c-dark  .week-badge.p-low    { background:#cceadc; color:#387060; }
   </style>
 </head>
 <body>
 
   <header class="app-header">
-    <h1>Daily <span class="word-planner">Planner</span></h1>
+    <h1>Jess<span class="word-board">Board</span></h1>
     <div class="date-display" id="full-date"></div>
   </header>
 
+  <div class="tab-bar" role="tablist">
+    <button class="tab active" role="tab" data-tab="day"     aria-selected="true" >Day</button>
+    <button class="tab"        role="tab" data-tab="week"    aria-selected="false">Week</button>
+    <button class="tab"        role="tab" data-tab="notes"   aria-selected="false">Notes</button>
+    <button class="tab"        role="tab" data-tab="bin"      aria-selected="false"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1.8em" height="1.8em" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9.5" y="2" width="5" height="2" rx="0.8"/><rect x="3.5" y="5" width="17" height="2.2" rx="1.1"/><path d="M5.5 7.2 L6.8 20.6 a1.2 1.2 0 0 0 1.2 1.1 h8 a1.2 1.2 0 0 0 1.2-1.1 L18.5 7.2"/><line x1="10" y1="10.5" x2="9.5" y2="18.5"/><line x1="12" y1="10.5" x2="12" y2="18.5"/><line x1="14" y1="10.5" x2="14.5" y2="18.5"/></svg></button>
+    <button class="tab"        role="tab" data-tab="settings" aria-selected="false">&#9881;</button>
+  </div>
+
+  <div id="panel-day" class="tab-panel">
   <nav class="day-nav" aria-label="Day navigation">
     <div class="nav-side">
       <button class="today-btn" id="open-cal" aria-label="Pick a date">&#128197;</button>
@@ -636,7 +795,7 @@
       <button class="today-btn" id="go-today">Today</button>
     </div>
   </nav>
-
+  <div class="panel-scroll">
   <main class="content">
 
     <!-- Progress -->
@@ -675,7 +834,7 @@
           <span id="due-preview-time"></span>
           <span class="due-preview-date" id="due-preview-date"></span>
         </div>
-        <button class="btn-remove-due" id="remove-due-btn" aria-label="Remove due date" style="display:none">Remove</button>
+        <button class="btn-remove-due" id="remove-due-btn" aria-label="Remove due date" style="display:none">&#9664; Remove</button>
       </div>
       <input type="datetime-local" id="due-picker" aria-label="Due date and time"
         style="position:fixed;opacity:0;pointer-events:none;width:0;height:0" />
@@ -687,7 +846,7 @@
         <div class="card-title">Tasks</div>
         <div style="display:flex;gap:6px">
           <button class="btn-reorder" id="reorder-btn">Reorder &#9776;</button>
-          <button class="btn-ghost" id="clear-done-btn">Clear done &#128465;</button>
+          <button class="btn-ghost btn-clear" id="clear-done-btn">Clear done &#128465;</button>
         </div>
       </div>
       <ul class="task-list" id="task-list" aria-label="Task list">
@@ -708,17 +867,96 @@
       ></textarea>
     </div>
 
-    <!-- Data backup -->
-    <div class="card">
-      <div class="card-title">Data Backup</div>
-      <div class="backup-actions">
-        <button class="btn-backup" id="export-btn">Export backup &#8675;</button>
-        <input type="file" id="import-input" accept=".json" style="display:none" />
-        <button class="btn-backup" id="import-btn">Import backup &#8673;</button>
-      </div>
-    </div>
+    <!-- Data backup moved to Settings tab -->
 
   </main>
+  </div><!-- scroll -->
+  </div><!-- /panel-day -->
+
+  <div id="panel-week" class="tab-panel" style="display:none" role="tabpanel">
+    <nav class="day-nav" id="week-nav">
+      <div class="nav-side">
+        <button class="today-btn" id="week-open-cal" aria-label="Pick week">&#128197;</button>
+        <input type="date" id="week-date-picker" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0" />
+      </div>
+      <div class="nav-center">
+        <button class="nav-arrow" id="week-prev" aria-label="Previous week">&#8249;</button>
+        <div class="day-label" id="week-label" aria-live="polite"></div>
+        <button class="nav-arrow" id="week-next" aria-label="Next week">&#8250;</button>
+      </div>
+      <div class="nav-side">
+        <button class="today-btn" id="week-go-current" style="line-height:1.2">This<br>Week</button>
+      </div>
+    </nav>
+    <div class="week-scroll-area" id="week-scroll">
+      <div id="week-table-inner"></div>
+    </div>
+  </div>
+
+  <div id="panel-notes" class="tab-panel" style="display:none" role="tabpanel">
+    <div class="panel-fixed" style="padding:14px 14px 8px">
+      <div class="card-header-row" style="padding-bottom:1px">
+        <div class="card-title" style="margin-bottom:0;font-size:0.9rem">All Notes</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-ghost" id="notes-select-all">Select all &#9745;</button>
+          <button class="btn-ghost btn-select-old" id="notes-select-old">Select old &#128197;</button>
+          <button class="btn-ghost btn-clear" id="notes-delete-selected">Delete selected &#128465;</button>
+        </div>
+      </div>
+      <div style="height:3px;background:var(--primary);border-radius:2px"></div>
+    </div>
+    <div class="panel-scroll" style="padding:0 14px 20px">
+      <div id="notes-list"></div>
+    </div>
+  </div>
+
+  <div id="panel-bin" class="tab-panel" style="display:none" role="tabpanel">
+    <div class="panel-fixed" style="padding:0 0 8px">
+      <div class="bin-subtab-bar">
+        <button class="bin-subtab active" data-bin="completed">Completed<span class="bin-subtab-desc">Completed tasks, deleted every Sunday.</span></button>
+        <button class="bin-subtab"        data-bin="deleted">Deleted<span class="bin-subtab-desc">Deleted tasks, kept 30 days.</span></button>
+        <button class="bin-subtab"        data-bin="notes">Notes<span class="bin-subtab-desc">Deleted notes, kept 90 days.</span></button>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:6px;padding:4px 14px 0">
+        <button class="btn-ghost" id="bin-select-all">Select all &#9745;</button>
+        <button class="btn-ghost" id="bin-restore-selected" style="color:#2e7d32;border-color:#388060">Restore &#10010;</button>
+        <button class="btn-ghost btn-clear" id="bin-clear-selected">Clear selected &#x1F525;</button>
+      </div>
+    </div>
+    <div class="panel-scroll" style="padding:0 14px 20px">
+      <div id="bin-list"></div>
+    </div>
+  </div>
+
+  <div id="panel-settings" class="tab-panel" style="display:none" role="tabpanel">
+    <div class="panel-scroll">
+      <div class="content" style="padding-top:14px">
+        <div class="card">
+          <div class="card-title">Data Backup</div>
+          <div class="backup-actions">
+            <button class="btn-backup" id="export-btn">Export backup &#9660;</button>
+            <input type="file" id="import-input" accept=".json" style="display:none" />
+            <button class="btn-backup" id="import-btn">Import backup &#9650;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Note edit modal -->
+  <div class="modal-overlay hidden" id="note-edit-modal" role="dialog" aria-modal="true" aria-label="Edit note">
+    <div class="modal-card">
+      <div class="modal-title" id="note-edit-date"></div>
+      <textarea class="notes-textarea" id="note-edit-input" maxlength="1000" aria-label="Note text"></textarea>
+      <div class="modal-footer">
+        <button class="btn-modal-delete" id="note-edit-delete">Delete</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn-modal-delete" id="note-edit-cancel" style="color:var(--secondary);border-color:var(--secondary)">Cancel</button>
+          <button class="btn-modal-save"   id="note-edit-save">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Edit task modal -->
   <div class="modal-overlay hidden" id="edit-modal" role="dialog" aria-modal="true" aria-label="Edit task">
@@ -740,7 +978,7 @@
           <span id="edit-due-time"></span>
           <span class="due-preview-date" id="edit-due-date"></span>
         </div>
-        <button class="btn-remove-due" id="edit-remove-due-btn" aria-label="Remove due date" style="display:none">Remove</button>
+        <button class="btn-remove-due" id="edit-remove-due-btn" aria-label="Remove due date" style="display:none">&#9664; Remove</button>
       </div>
       <input type="datetime-local" id="edit-due-picker"
         style="position:fixed;opacity:0;pointer-events:none;width:0;height:0" />
@@ -752,7 +990,7 @@
   </div>
 
   <footer class="app-footer">
-    <span>Daily Planner v<span id="ver"></span> &nbsp;<span class="network-badge" id="network-badge"></span></span>
+    <span>JessBoard v<span id="ver"></span> &nbsp;<span class="network-badge" id="network-badge"></span></span>
   </footer>
 
   <script>
@@ -791,6 +1029,13 @@
       return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
     }
 
+    function getDefaultDue() {
+      const d = new Date();
+      d.setHours(d.getHours() + 1, 0, 0, 0);
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:00`;
+    }
+
     function shiftDay(d, n) {
       const copy = new Date(d);
       copy.setDate(copy.getDate() + n);
@@ -800,7 +1045,9 @@
     // ── Storage ───────────────────────────────────────────────────────────────
 
     const STORAGE_KEY  = 'plannerData';
-    const APP_VERSION  = '0.1';
+    const BIN_KEY      = 'jessBoardBin';
+    const SWEEP_KEY    = 'jessBoardLastSweep';
+    const APP_VERSION  = '0.2';
 
     function loadAll() {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -810,6 +1057,13 @@
     function saveAll(data) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
+
+    function loadBin() {
+      try { return JSON.parse(localStorage.getItem(BIN_KEY)) || { completed: [], deleted: [], notes: [] }; }
+      catch { return { completed: [], deleted: [], notes: [] }; }
+    }
+
+    function saveBin(bin) { localStorage.setItem(BIN_KEY, JSON.stringify(bin)); }
 
     function getDayData(key) {
       return loadAll()[key] || { tasks: [], notes: '' };
@@ -1091,8 +1345,8 @@
       saveDayData(key, day);
 
       input.value = '';
-      pendingDue = '';
-      document.getElementById('due-picker').value = '';
+      pendingDue = getDefaultDue();
+      document.getElementById('due-picker').value = pendingDue;
       updateDueDisplay();
       input.focus();
       render();
@@ -1109,8 +1363,14 @@
     }
 
     function deleteTask(id) {
-      const key = toKey(currentDate);
-      const day = getDayData(key);
+      const key  = toKey(currentDate);
+      const day  = getDayData(key);
+      const task = day.tasks.find(t => t.id === id);
+      if (task) {
+        const bin = loadBin();
+        bin.deleted.push({ ...task, date: key, deletedAt: new Date().toISOString() });
+        saveBin(bin);
+      }
       day.tasks = day.tasks.filter(t => t.id !== id);
       saveDayData(key, day);
       renderTasks(day.tasks);
@@ -1120,7 +1380,12 @@
       const key = toKey(currentDate);
       const day = getDayData(key);
       if (!day.tasks.some(t => t.done)) return;
-      if (!confirm('Remove all completed tasks?')) return;
+      if (!confirm('Remove all completed tasks?\n\nNote: completed tasks from past days are also auto-cleared into the Bin every Sunday at midnight.')) return;
+      const bin  = loadBin();
+      const ts   = new Date().toISOString();
+      const done = day.tasks.filter(t => t.done);
+      done.forEach(t => bin.deleted.push({ ...t, date: key, deletedAt: ts }));
+      saveBin(bin);
       day.tasks = day.tasks.filter(t => !t.done);
       saveDayData(key, day);
       renderTasks(day.tasks);
@@ -1242,7 +1507,7 @@
     });
     document.getElementById('edit-open-due-btn').addEventListener('click', () => {
       const now = new Date();
-      now.setMinutes(Math.ceil((now.getMinutes() + 1) / 30) * 30, 0, 0);
+      now.setHours(now.getHours() + 1, 0, 0, 0);
       const pad = n => String(n).padStart(2, '0');
       if (!editDuePicker.value) {
         editDuePicker.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -1268,7 +1533,7 @@
     document.getElementById('open-due-btn').addEventListener('click', () => {
       // Always pre-fill so confirming without editing still commits the value
       const now = new Date();
-      now.setMinutes(Math.ceil((now.getMinutes() + 1) / 30) * 30, 0, 0);
+      now.setHours(now.getHours() + 1, 0, 0, 0);
       const pad = n => String(n).padStart(2, '0');
       if (!duePicker.value) {
         duePicker.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -1304,7 +1569,35 @@
     render();
     updateNetworkBadge();
     document.getElementById('ver').textContent = APP_VERSION;
+    document.getElementById('panel-day').style.display = 'flex';
     navigator.storage?.persist?.();
+    pendingDue = getDefaultDue();
+    document.getElementById('due-picker').value = pendingDue;
+    updateDueDisplay();
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const name = tab.dataset.tab;
+        document.querySelectorAll('.tab').forEach(t => {
+          t.classList.toggle('active', t.dataset.tab === name);
+          t.setAttribute('aria-selected', t.dataset.tab === name);
+        });
+        document.querySelectorAll('.tab-panel').forEach(p => {
+          p.style.display = p.id === `panel-${name}` ? 'flex' : 'none';
+        });
+        if (name === 'notes') renderNotesTab();
+        if (name === 'bin')   renderBinTab();
+        if (name === 'week')  renderWeekTab();
+        if (name === 'day') {
+          pendingDue = getDefaultDue();
+          document.getElementById('due-picker').value = pendingDue;
+          updateDueDisplay();
+        }
+      });
+    });
+
+    checkSundaySweep();
+    pruneExpiredBinItems();
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -1313,6 +1606,525 @@
         });
       });
     }
+
+    // ── Week tab ──────────────────────────────────────────────────────────────
+
+    let currentWeekStart = getMonday(new Date());
+
+    function getMonday(d) {
+      const date = new Date(d);
+      const day  = date.getDay();
+      date.setDate(date.getDate() + (day === 0 ? -6 : 1 - day));
+      date.setHours(0, 0, 0, 0);
+      return date;
+    }
+
+    function getWeekLabel(mon) {
+      const todayMon = getMonday(new Date());
+      const weeks = Math.round((mon - todayMon) / (7 * 86400000));
+      if (weeks === 0)  return 'This Week';
+      if (weeks === 1)  return 'Next Week';
+      if (weeks === -1) return 'Last Week';
+      const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+      const fmt = d => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      return `${fmt(mon)} \u2013 ${fmt(sun)}`;
+    }
+
+    function renderWeekTab() {
+      document.getElementById('week-label').textContent = getWeekLabel(currentWeekStart);
+      const weekDays = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(currentWeekStart); d.setDate(currentWeekStart.getDate() + i); return d;
+      });
+      const weekKeys  = weekDays.map(d => toKey(d));
+      const DAY_NAMES = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      const now       = new Date();
+      const cols      = Array.from({ length: 8 }, () => []);
+
+      Object.values(loadAll()).forEach(day => {
+        (day.tasks || []).forEach(task => {
+          if (task.due) {
+            const idx = weekKeys.indexOf(toKey(new Date(task.due)));
+            if (idx !== -1) {
+              const dueD = new Date(task.due);
+              const overdue  = dueD < now;
+              const dueToday = !overdue && toKey(dueD) === toKey(now);
+              cols[idx].push({ ...task, overdue, dueToday });
+            }
+          } else {
+            cols[7].push({ ...task, overdue: false });
+          }
+        });
+      });
+      for (let i = 0; i < 8; i++) cols[i].sort((a, b) => (a.due || '').localeCompare(b.due || ''));
+
+      const maxCols   = Math.max(1, ...cols.map(c => c.length));
+      const container = document.getElementById('week-table-inner');
+      container.innerHTML = '';
+
+      const tbl  = document.createElement('table'); tbl.className = 'week-tbl';
+      const tbody = document.createElement('tbody');
+
+      const mkIcon = task => {
+        if (!task.done && !task.overdue && !task.dueToday) return null;
+        const s = document.createElement('span');
+        if (task.done)          { s.textContent = '\u2713';           s.style.cssText = 'color:#2e7d32;font-size:0.75rem;font-weight:bold;'; }
+        else if (task.overdue) { s.textContent = '\u274C';           s.style.fontSize = '0.7rem'; }
+        else                   { s.textContent = '\u26A0\uFE0F';     s.style.fontSize = '0.8rem'; }
+        return s;
+      };
+
+      // One row per day/anytime; tasks expand rightward — Anytime first
+      for (const row of [7, 0, 1, 2, 3, 4, 5, 6]) {
+        const tr = document.createElement('tr');
+        const th = document.createElement('th');
+        if (row < 7) {
+          th.textContent = `${DAY_NAMES[row]} - ${weekDays[row].getDate()} - ${weekDays[row].toLocaleDateString('en-GB',{month:'short'})}`;
+          th.style.cursor = 'pointer';
+          th.title = 'Open in Day tab';
+          if (toKey(weekDays[row]) === toKey(now)) th.style.background = '#7050a8';
+          th.addEventListener('click', () => {
+            currentDate = new Date(weekDays[row]);
+            document.querySelectorAll('.tab').forEach(t => {
+              t.classList.toggle('active', t.dataset.tab === 'day');
+              t.setAttribute('aria-selected', t.dataset.tab === 'day');
+            });
+            document.querySelectorAll('.tab-panel').forEach(p => {
+              p.style.display = p.id === 'panel-day' ? 'flex' : 'none';
+            });
+            pendingDue = getDefaultDue();
+            document.getElementById('due-picker').value = pendingDue;
+            updateDueDisplay();
+            render();
+          });
+        } else {
+          th.textContent = 'Anytime';
+        }
+        tr.appendChild(th);
+        for (let col = 0; col < maxCols; col++) {
+          const td = document.createElement('td');
+          td.className = (row + col) % 2 === 0 ? 'c-light' : 'c-dark';
+          const task = cols[row][col];
+          if (task) {
+            const te  = document.createElement('div'); te.className = 'week-task';
+            const top = document.createElement('div'); top.className = 'week-task-top';
+            const p   = task.priority || 'normal';
+            const b   = document.createElement('span'); b.className = `week-badge p-${p}`; b.textContent = p === 'normal' ? 'NORM' : p.toUpperCase();
+            const iL = mkIcon(task); const iR = mkIcon(task);
+            if (iL) top.appendChild(iL);
+            top.appendChild(b);
+            if (iR) top.appendChild(iR);
+            const tx = document.createElement('span'); tx.className = 'week-task-text'; tx.textContent = task.text;
+            if (task.done) tx.style.textDecoration = 'line-through';
+            te.append(top, tx); td.appendChild(te);
+          }
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+      tbl.appendChild(tbody);
+      container.appendChild(tbl);
+    }
+
+    // Drag-to-pan week scroll area (pointer capture keeps events on element)
+    (function() {
+      const el = document.getElementById('week-scroll');
+      let active = false, sx, sy, sl, st;
+      el.addEventListener('pointerdown', e => {
+        active = true; sx = e.clientX; sy = e.clientY;
+        sl = el.scrollLeft; st = el.scrollTop;
+        el.setPointerCapture(e.pointerId);
+        el.classList.add('dragging');
+        e.preventDefault();
+      });
+      el.addEventListener('pointermove', e => {
+        if (!active) return;
+        el.scrollLeft = sl - (e.clientX - sx);
+        el.scrollTop  = st - (e.clientY - sy);
+      });
+      const end = () => { active = false; el.classList.remove('dragging'); };
+      el.addEventListener('pointerup', end);
+      el.addEventListener('pointercancel', end);
+    })();
+
+    document.getElementById('week-prev').addEventListener('click', () => {
+      currentWeekStart = new Date(currentWeekStart);
+      currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+      renderWeekTab();
+    });
+    document.getElementById('week-next').addEventListener('click', () => {
+      currentWeekStart = new Date(currentWeekStart);
+      currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+      renderWeekTab();
+    });
+    document.getElementById('week-go-current').addEventListener('click', () => {
+      currentWeekStart = getMonday(new Date()); renderWeekTab();
+    });
+    const weekPicker = document.getElementById('week-date-picker');
+    document.getElementById('week-open-cal').addEventListener('click', () => {
+      weekPicker.value = toKey(currentWeekStart);
+      weekPicker.showPicker?.() || weekPicker.click();
+    });
+    weekPicker.addEventListener('change', () => {
+      if (!weekPicker.value) return;
+      const [y,m,d] = weekPicker.value.split('-').map(Number);
+      currentWeekStart = getMonday(new Date(y, m-1, d));
+      renderWeekTab();
+    });
+
+    // ── Notes tab ─────────────────────────────────────────────────────────────
+
+    function renderNotesTab() {
+      const all  = loadAll();
+      const list = document.getElementById('notes-list');
+      list.innerHTML = '';
+
+      const days = Object.keys(all)
+        .filter(k => all[k].notes?.trim())
+        .sort(); // ISO keys sort chronologically
+
+      if (!days.length) {
+        list.innerHTML = '<p class="empty-state" style="padding:20px 0">No notes yet \u2014 add them in the Day view.</p>';
+        return;
+      }
+
+      days.forEach(key => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.marginBottom = '10px';
+
+        const d = new Date(key + 'T00:00:00');
+        const label = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+        const header = document.createElement('div');
+        header.className = 'note-card-header';
+
+        const dateEl = document.createElement('span');
+        dateEl.className = 'note-card-date';
+        dateEl.textContent = label;
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn-edit';
+        editBtn.innerHTML = '<span class="btn-edit-icon">&#x270E;</span>';
+        editBtn.setAttribute('aria-label', `Edit note for ${label}`);
+        editBtn.addEventListener('click', () => openNoteEditor(key));
+
+        const hr  = document.createElement('hr');  hr.className = 'note-card-hr';
+        const txt = document.createElement('p');    txt.className = 'note-card-text';
+        txt.textContent = all[key].notes;
+
+        header.append(dateEl, editBtn);
+        const cb = document.createElement('input'); cb.type='checkbox'; cb.className='note-checkbox'; cb.dataset.key=key;
+        const actions = document.createElement('div'); actions.style.cssText='display:flex;align-items:center;gap:8px'; actions.append(editBtn, cb);
+        header.replaceChild(actions, editBtn);
+        card.append(header, hr, txt);
+        list.appendChild(card);
+      });
+    }
+
+    let editingNoteKey = null;
+
+    function openNoteEditor(key) {
+      editingNoteKey = key;
+      const d = new Date(key + 'T00:00:00');
+      document.getElementById('note-edit-date').textContent =
+        d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      document.getElementById('note-edit-input').value = loadAll()[key]?.notes || '';
+      document.getElementById('note-edit-modal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('note-edit-input').focus(), 50);
+    }
+
+    function closeNoteEditor() {
+      document.getElementById('note-edit-modal').classList.add('hidden');
+      editingNoteKey = null;
+    }
+
+    function saveNoteEdit() {
+      if (!editingNoteKey) return;
+      const all = loadAll();
+      if (!all[editingNoteKey]) all[editingNoteKey] = { tasks: [], notes: '' };
+      all[editingNoteKey].notes = document.getElementById('note-edit-input').value;
+      saveAll(all);
+      closeNoteEditor();
+      renderNotesTab();
+    }
+
+    document.getElementById('note-edit-save').addEventListener('click', saveNoteEdit);
+    document.getElementById('note-edit-cancel').addEventListener('click', closeNoteEditor);
+    document.getElementById('note-edit-delete').addEventListener('click', () => {
+      if (!confirm('Delete this note? This cannot be undone.')) return;
+      if (!editingNoteKey) return;
+      const all = loadAll();
+      if (all[editingNoteKey]?.notes?.trim()) {
+        const bin = loadBin();
+        bin.notes.push({ date: editingNoteKey, text: all[editingNoteKey].notes, deletedAt: new Date().toISOString() });
+        saveBin(bin);
+        all[editingNoteKey].notes = '';
+        saveAll(all);
+      }
+      closeNoteEditor();
+      renderNotesTab();
+    });
+
+    // ── Bin tab ───────────────────────────────────────────────────────────────
+
+    let activeBinSubtab = 'completed';
+
+    function renderBinTab(sub) {
+      if (sub) activeBinSubtab = sub;
+      document.querySelectorAll('.bin-subtab').forEach(b => {
+        b.classList.toggle('active', b.dataset.bin === activeBinSubtab);
+      });
+      const list = document.getElementById('bin-list');
+      list.innerHTML = '';
+
+      // Completed tab: live view of all done tasks still in plannerData
+      if (activeBinSubtab === 'completed') {
+        const all = loadAll();
+        const items = [];
+        Object.keys(all).sort().forEach(dateKey => {
+          (all[dateKey].tasks || []).filter(t => t.done).forEach(t => items.push({ ...t, date: dateKey }));
+        });
+        if (!items.length) { list.innerHTML = '<p class="empty-state" style="padding:20px 0">No completed tasks — tick a task to see it here.</p>'; return; }
+        document.getElementById('bin-clear-selected').innerHTML = 'Clear selected &#128465;';
+        items.reverse().forEach(item => {
+          const card = document.createElement('div'); card.className = 'card'; card.style.marginBottom = '10px';
+          const d = new Date(item.date + 'T00:00:00');
+          const meta = document.createElement('div'); meta.className = 'bin-item-meta';
+          meta.textContent = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+          const badge = document.createElement('span');
+          const p = item.priority || 'normal';
+          badge.className = `priority-badge p-${p}`; badge.textContent = p === 'normal' ? 'NORM' : p;
+          const txt = document.createElement('span'); txt.className = 'bin-item-text'; txt.style.textDecoration = 'line-through'; txt.textContent = item.text;
+          const badgeRow = document.createElement('div'); badgeRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:4px';
+          badgeRow.append(badge, txt);
+          const binItem = document.createElement('div'); binItem.className = 'bin-item'; binItem.append(meta, badgeRow);
+          const cb = document.createElement('input'); cb.type = 'checkbox'; cb.className = 'bin-checkbox'; cb.dataset.taskId = item.id;
+          const row = document.createElement('div'); row.className = 'bin-card-row'; row.append(binItem, cb);
+          card.appendChild(row); list.appendChild(card);
+        });
+        return;
+      }
+
+      const bin   = loadBin();
+      const items = bin[activeBinSubtab] || [];
+      document.getElementById('bin-clear-selected').innerHTML = 'Clear selected &#x1F525;';
+      if (!items.length) {
+        list.innerHTML = '<p class="empty-state" style="padding:20px 0">Nothing here yet.</p>';
+        return;
+      }
+
+      const makeCheckbox = idx => {
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.className = 'bin-checkbox'; cb.dataset.idx = idx;
+        return cb;
+      };
+
+      if (activeBinSubtab === 'notes') {
+        items.slice().reverse().forEach((item, di) => {
+          const origIdx = items.length - 1 - di;
+          const card = document.createElement('div'); card.className = 'card'; card.style.marginBottom = '10px';
+          const d = new Date(item.date + 'T00:00:00');
+          const meta = document.createElement('div'); meta.className = 'bin-item-meta';
+          meta.textContent = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+          const txt = document.createElement('p'); txt.className = 'bin-item-text'; txt.textContent = item.text;
+          const content = document.createElement('div'); content.className = 'bin-card-content';
+          content.append(meta, txt);
+          const row = document.createElement('div'); row.className = 'bin-card-row';
+          row.append(content, makeCheckbox(origIdx));
+          card.appendChild(row); list.appendChild(card);
+        });
+      } else {
+        items.slice().reverse().forEach((item, di) => {
+          const origIdx = items.length - 1 - di;
+          const card = document.createElement('div'); card.className = 'card'; card.style.marginBottom = '10px';
+          const d = new Date((item.date || toKey(new Date())) + 'T00:00:00');
+          const meta = document.createElement('div'); meta.className = 'bin-item-meta';
+          meta.textContent = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+          const badge = document.createElement('span');
+          const p = item.priority || 'normal';
+          badge.className = `priority-badge p-${p}`; badge.textContent = p === 'normal' ? 'NORM' : p;
+          const txt = document.createElement('span'); txt.className = 'bin-item-text'; txt.textContent = item.text;
+          const badgeRow = document.createElement('div'); badgeRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:4px';
+          badgeRow.append(badge, txt);
+          const binItem = document.createElement('div'); binItem.className = 'bin-item';
+          binItem.append(meta, badgeRow);
+          const content = document.createElement('div'); content.className = 'bin-card-content';
+          content.appendChild(binItem);
+          const cardRow = document.createElement('div'); cardRow.className = 'bin-card-row';
+          cardRow.append(content, makeCheckbox(origIdx));
+          card.appendChild(cardRow); list.appendChild(card);
+        });
+      }
+    }
+
+    // ── Sunday midnight sweep ───────────────────────────────────────────────────
+
+    // Removes expired deleted items: tasks after 30 days, notes after 90 days.
+    // deletedAt resets to a fresh timestamp if an item is deleted again after reinstatement.
+    function pruneExpiredBinItems() {
+      const bin = loadBin();
+      const now = Date.now();
+      const D30 = 30 * 86400000;
+      const D90 = 90 * 86400000;
+      const expired = (item, limit) => item.deletedAt && now - new Date(item.deletedAt).getTime() >= limit;
+      const dBefore = bin.deleted.length + bin.notes.length;
+      bin.deleted = bin.deleted.filter(t => !expired(t, D30));
+      bin.notes   = bin.notes.filter(n => !expired(n, D90));
+      if (bin.deleted.length + bin.notes.length !== dBefore) saveBin(bin);
+    }
+
+    function checkSundaySweep() {
+      const now = new Date();
+      const d = new Date(now);
+      d.setDate(d.getDate() - d.getDay()); // rewind to this week's Sunday
+      d.setHours(0, 0, 0, 0);
+      const thisSundayKey = toKey(d);
+      if ((localStorage.getItem(SWEEP_KEY) || '') >= thisSundayKey) return;
+
+      const todayKey = toKey(now);
+      const all = loadAll();
+      const bin = loadBin();
+      let changed = false;
+      Object.keys(all).forEach(key => {
+        if (key >= todayKey) return;
+        const done = all[key].tasks.filter(t => t.done);
+        if (!done.length) return;
+        done.forEach(t => bin.deleted.push({ ...t, date: key, deletedAt: now.toISOString() }));
+        all[key].tasks = all[key].tasks.filter(t => !t.done);
+        changed = true;
+      });
+      if (changed) { saveAll(all); saveBin(bin); }
+      localStorage.setItem(SWEEP_KEY, thisSundayKey);
+    }
+
+    function deleteOldNotes() {
+      const todayKey = toKey(new Date());
+      const all = loadAll();
+      const bin = loadBin();
+      const old = Object.keys(all).filter(k => k < todayKey && all[k].notes?.trim());
+      if (!old.length) { alert('No old notes to delete.'); return; }
+      if (!confirm(`Delete notes from ${old.length} day(s) before today? They will be moved to the Bin.`)) return;
+      old.forEach(k => {
+        bin.notes.push({ date: k, text: all[k].notes, deletedAt: new Date().toISOString() });
+        all[k].notes = '';
+      });
+      saveAll(all); saveBin(bin);
+      renderNotesTab();
+    }
+
+    document.getElementById('notes-select-all').addEventListener('click', () => {
+      const boxes = [...document.querySelectorAll('.note-checkbox')];
+      const all = boxes.every(c => c.checked);
+      boxes.forEach(c => c.checked = !all);
+    });
+    document.getElementById('notes-select-old').addEventListener('click', () => {
+      const todayKey = toKey(new Date());
+      document.querySelectorAll('.note-checkbox').forEach(c => { c.checked = c.dataset.key < todayKey; });
+    });
+    document.getElementById('notes-delete-selected').addEventListener('click', () => {
+      const checked = [...document.querySelectorAll('.note-checkbox:checked')];
+      if (!checked.length) { alert('No notes selected.'); return; }
+      if (!confirm(`Move ${checked.length} note(s) to the Bin? They will be kept for 90 days.`)) return;
+      const keys = checked.map(c => c.dataset.key);
+      const all  = loadAll();
+      const bin  = loadBin();
+      const ts   = new Date().toISOString();
+      keys.forEach(k => {
+        if (all[k]?.notes?.trim()) {
+          bin.notes.push({ date: k, text: all[k].notes, deletedAt: ts });
+          all[k].notes = '';
+        }
+      });
+      saveAll(all); saveBin(bin); renderNotesTab();
+    });
+    document.getElementById('bin-select-all').addEventListener('click', () => {
+      const boxes = [...document.querySelectorAll('.bin-checkbox')];
+      const allChecked = boxes.every(c => c.checked);
+      boxes.forEach(c => c.checked = !allChecked);
+    });
+    document.getElementById('bin-restore-selected').addEventListener('click', () => {
+      const checked = [...document.querySelectorAll('.bin-checkbox:checked')];
+      if (!checked.length) { alert('No items selected.'); return; }
+      const todayKey = toKey(new Date());
+
+      if (activeBinSubtab === 'completed') {
+        const selectedIds = new Set(checked.map(c => Number(c.dataset.taskId)));
+        const all = loadAll();
+        const today = all[todayKey] || { tasks: [], notes: '' };
+        Object.keys(all).forEach(dateKey => {
+          const tasks = all[dateKey].tasks || [];
+          tasks.filter(t => t.done && selectedIds.has(t.id)).forEach(t => {
+            today.tasks.push({ id: Date.now() + Math.floor(Math.random()*1000), text: t.text, done: false, priority: t.priority || 'normal', due: t.due || null });
+          });
+          all[dateKey].tasks = tasks.filter(t => !(t.done && selectedIds.has(t.id)));
+        });
+        all[todayKey] = today;
+        saveAll(all); renderBinTab(); return;
+      }
+
+      if (activeBinSubtab === 'deleted') {
+        const selectedIdxs = new Set(checked.map(c => Number(c.dataset.idx)));
+        const bin = loadBin();
+        const all = loadAll();
+        const today = all[todayKey] || { tasks: [], notes: '' };
+        bin.deleted.filter((_, i) => selectedIdxs.has(i)).forEach(t => {
+          today.tasks.push({ id: Date.now() + Math.floor(Math.random()*1000), text: t.text, done: false, priority: t.priority || 'normal', due: t.due || null });
+        });
+        bin.deleted = bin.deleted.filter((_, i) => !selectedIdxs.has(i));
+        all[todayKey] = today;
+        saveAll(all); saveBin(bin); renderBinTab(); return;
+      }
+
+      if (activeBinSubtab === 'notes') {
+        const selectedIdxs = new Set(checked.map(c => Number(c.dataset.idx)));
+        const bin = loadBin();
+        const all = loadAll();
+        const errored = [];
+        const restoredIdxs = new Set();
+        bin.notes.forEach((note, i) => {
+          if (!selectedIdxs.has(i)) return;
+          if (all[note.date]?.notes?.trim()) { errored.push(note.date); return; }
+          if (!all[note.date]) all[note.date] = { tasks: [], notes: '' };
+          all[note.date].notes = note.text;
+          restoredIdxs.add(i);
+        });
+        if (errored.length) {
+          const labels = errored.map(k => new Date(k + 'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})).join(', ');
+          alert(`New notes on ${labels} already exist \u2014 those notes couldn\u2019t be restored automatically. Copy the text from the Bin and add it manually via the Notes section on the Day tab for that day.`);
+        }
+        if (restoredIdxs.size) {
+          bin.notes = bin.notes.filter((_, i) => !restoredIdxs.has(i));
+          saveAll(all); saveBin(bin);
+        }
+        renderBinTab(); return;
+      }
+    });
+    document.getElementById('bin-clear-selected').addEventListener('click', () => {
+      const checked = [...document.querySelectorAll('.bin-checkbox:checked')];
+      if (!checked.length) { alert('No items selected.'); return; }
+      if (activeBinSubtab === 'completed') {
+        if (!confirm(`Delete ${checked.length} selected completed task(s)?\n\nNote: completed tasks from past days are also auto-cleared every Sunday at midnight.`)) return;
+        const selectedIds = new Set(checked.map(c => Number(c.dataset.taskId)));
+        const all = loadAll();
+        const bin = loadBin();
+        const ts  = new Date().toISOString();
+        Object.keys(all).forEach(dateKey => {
+          const tasks = all[dateKey].tasks || [];
+          tasks.filter(t => t.done && selectedIds.has(t.id)).forEach(t => bin.deleted.push({ ...t, date: dateKey, deletedAt: ts }));
+          all[dateKey].tasks = tasks.filter(t => !(t.done && selectedIds.has(t.id)));
+        });
+        saveAll(all); saveBin(bin); renderBinTab(); return;
+      }
+      if (!confirm(`Permanently delete ${checked.length} selected item(s)?\n\nThis cannot be undone.`)) return;
+      const selected = new Set(checked.map(c => Number(c.dataset.idx)));
+      const bin = loadBin();
+      bin[activeBinSubtab] = bin[activeBinSubtab].filter((_, i) => !selected.has(i));
+      saveBin(bin);
+      renderBinTab();
+    });
+    document.querySelectorAll('.bin-subtab').forEach(b => {
+      b.addEventListener('click', () => renderBinTab(b.dataset.bin));
+    });
 
     // ── Network status ────────────────────────────────────────────────────────
 
