@@ -59,6 +59,15 @@
       line-height: 1.1;
     }
 
+    .title-logo {
+      height: 1.6em;
+      width: auto;
+      vertical-align: middle;
+      margin-left: -0.3em;
+      filter: invert(1);
+      mix-blend-mode: screen;
+    }
+
     .app-header h1 .word-board { color: rgba(255,255,255,0.72); }
 
     .date-display {
@@ -768,7 +777,7 @@
 <body>
 
   <header class="app-header">
-    <h1>Jess<span class="word-board">Board</span></h1>
+    <h1>Jess<span class="word-board">Board</span><img src="icons/JessBoard_logo_3.png" alt="" class="title-logo" aria-hidden="true" /></h1>
     <div class="date-display" id="full-date"></div>
   </header>
 
@@ -1657,7 +1666,7 @@
       });
       for (let i = 0; i < 8; i++) cols[i].sort((a, b) => (a.due || '').localeCompare(b.due || ''));
 
-      const maxCols   = Math.max(1, ...cols.map(c => c.length));
+      const maxCols   = Math.max(3, ...cols.map(c => c.length));
       const container = document.getElementById('week-table-inner');
       container.innerHTML = '';
 
