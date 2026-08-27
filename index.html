@@ -684,6 +684,11 @@
       min-height: 62px;
       transition: all 0.15s;
     }
+    .btn-clear { color: #b03040; border-color: #e8a0a8; }
+    .btn-clear:hover { background: #ffeaea; color: #b03040; border-color: #b03040; }
+    .btn-select-old { color: #3060a0; border-color: #a8c8e8; }
+    .btn-select-old:hover { background: #e8f0fc; color: #3060a0; border-color: #3060a0; }
+    .note-checkbox { width:18px; height:18px; accent-color:var(--secondary); cursor:pointer; flex-shrink:0; }
     .bin-checkbox {
       width: 18px;
       height: 18px;
@@ -691,10 +696,9 @@
       cursor: pointer;
       flex-shrink: 0;
     }
-    .bin-card-row { display: flex; align-items: flex-start; gap: 10px; }
     .bin-card-content { flex: 1; min-width: 0; }
 
-    .bin-subtab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .bin-card-row { display: flex; align-items: flex-start; gap: 10px; }
     .bin-subtab-desc {
       font-size: 0.7rem;
       font-weight: 400;
@@ -702,11 +706,11 @@
       text-transform: none;
       opacity: 0.8;
     }
-    .bin-item { display: flex; flex-direction: column; gap: 3px; }
+    .bin-subtab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
     .bin-item-meta { font-size: 0.68rem; color: var(--text-muted); }
     .bin-item-text { font-size: 0.88rem; color: var(--text); white-space: pre-wrap; word-break: break-word; }
 
-    /* ── Backup actions row ───────────────────────────────────────────── */
+    .bin-item { display: flex; flex-direction: column; gap: 3px; }
     .backup-actions {
       display: flex;
       justify-content: center;
@@ -830,7 +834,7 @@
           <span id="due-preview-time"></span>
           <span class="due-preview-date" id="due-preview-date"></span>
         </div>
-        <button class="btn-remove-due" id="remove-due-btn" aria-label="Remove due date" style="display:none">&#11013; Remove</button>
+        <button class="btn-remove-due" id="remove-due-btn" aria-label="Remove due date" style="display:none">&#9664; Remove</button>
       </div>
       <input type="datetime-local" id="due-picker" aria-label="Due date and time"
         style="position:fixed;opacity:0;pointer-events:none;width:0;height:0" />
@@ -842,7 +846,7 @@
         <div class="card-title">Tasks</div>
         <div style="display:flex;gap:6px">
           <button class="btn-reorder" id="reorder-btn">Reorder &#9776;</button>
-          <button class="btn-ghost" id="clear-done-btn">Clear done &#128465;</button>
+          <button class="btn-ghost btn-clear" id="clear-done-btn">Clear done &#128465;</button>
         </div>
       </div>
       <ul class="task-list" id="task-list" aria-label="Task list">
@@ -893,7 +897,11 @@
     <div class="panel-fixed" style="padding:14px 14px 8px">
       <div class="card-header-row" style="padding-bottom:1px">
         <div class="card-title" style="margin-bottom:0;font-size:0.9rem">All Notes</div>
-        <button class="btn-ghost" id="delete-old-notes-btn">Delete old &#128465;</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn-ghost" id="notes-select-all">Select all &#9745;</button>
+          <button class="btn-ghost btn-select-old" id="notes-select-old">Select old &#128197;</button>
+          <button class="btn-ghost btn-clear" id="notes-delete-selected">Delete selected &#128465;</button>
+        </div>
       </div>
       <div style="height:3px;background:var(--primary);border-radius:2px"></div>
     </div>
@@ -905,13 +913,14 @@
   <div id="panel-bin" class="tab-panel" style="display:none" role="tabpanel">
     <div class="panel-fixed" style="padding:0 0 8px">
       <div class="bin-subtab-bar">
-        <button class="bin-subtab active" data-bin="completed">Completed<span class="bin-subtab-desc">auto-cleared weekly</span></button>
-        <button class="bin-subtab"        data-bin="deleted">Deleted<span class="bin-subtab-desc">manually removed</span></button>
-        <button class="bin-subtab"        data-bin="notes">Notes<span class="bin-subtab-desc">cleared notes</span></button>
+        <button class="bin-subtab active" data-bin="completed">Completed<span class="bin-subtab-desc">Completed tasks, deleted every Sunday.</span></button>
+        <button class="bin-subtab"        data-bin="deleted">Deleted<span class="bin-subtab-desc">Deleted tasks, kept 30 days.</span></button>
+        <button class="bin-subtab"        data-bin="notes">Notes<span class="bin-subtab-desc">Deleted notes, kept 90 days.</span></button>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:6px;padding:4px 14px 0">
-        <button class="btn-ghost" id="bin-select-all">Select all</button>
-        <button class="btn-ghost" id="bin-clear-selected">Clear selected &#x1F525;</button>
+        <button class="btn-ghost" id="bin-select-all">Select all &#9745;</button>
+        <button class="btn-ghost" id="bin-restore-selected" style="color:#2e7d32;border-color:#388060">Restore &#10010;</button>
+        <button class="btn-ghost btn-clear" id="bin-clear-selected">Clear selected &#x1F525;</button>
       </div>
     </div>
     <div class="panel-scroll" style="padding:0 14px 20px">
@@ -925,9 +934,9 @@
         <div class="card">
           <div class="card-title">Data Backup</div>
           <div class="backup-actions">
-            <button class="btn-backup" id="export-btn">Export backup &#11015;</button>
+            <button class="btn-backup" id="export-btn">Export backup &#9660;</button>
             <input type="file" id="import-input" accept=".json" style="display:none" />
-            <button class="btn-backup" id="import-btn">Import backup &#11014;</button>
+            <button class="btn-backup" id="import-btn">Import backup &#9650;</button>
           </div>
         </div>
       </div>
@@ -969,7 +978,7 @@
           <span id="edit-due-time"></span>
           <span class="due-preview-date" id="edit-due-date"></span>
         </div>
-        <button class="btn-remove-due" id="edit-remove-due-btn" aria-label="Remove due date" style="display:none">&#11013; Remove</button>
+        <button class="btn-remove-due" id="edit-remove-due-btn" aria-label="Remove due date" style="display:none">&#9664; Remove</button>
       </div>
       <input type="datetime-local" id="edit-due-picker"
         style="position:fixed;opacity:0;pointer-events:none;width:0;height:0" />
@@ -1373,8 +1382,9 @@
       if (!day.tasks.some(t => t.done)) return;
       if (!confirm('Remove all completed tasks?\n\nNote: completed tasks from past days are also auto-cleared into the Bin every Sunday at midnight.')) return;
       const bin  = loadBin();
+      const ts   = new Date().toISOString();
       const done = day.tasks.filter(t => t.done);
-      done.forEach(t => bin.completed.push({ ...t, date: key, addedAt: new Date().toISOString() }));
+      done.forEach(t => bin.deleted.push({ ...t, date: key, deletedAt: ts }));
       saveBin(bin);
       day.tasks = day.tasks.filter(t => !t.done);
       saveDayData(key, day);
@@ -1587,6 +1597,7 @@
     });
 
     checkSundaySweep();
+    pruneExpiredBinItems();
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -1802,6 +1813,9 @@
         txt.textContent = all[key].notes;
 
         header.append(dateEl, editBtn);
+        const cb = document.createElement('input'); cb.type='checkbox'; cb.className='note-checkbox'; cb.dataset.key=key;
+        const actions = document.createElement('div'); actions.style.cssText='display:flex;align-items:center;gap:8px'; actions.append(editBtn, cb);
+        header.replaceChild(actions, editBtn);
         card.append(header, hr, txt);
         list.appendChild(card);
       });
@@ -1862,8 +1876,38 @@
       });
       const list = document.getElementById('bin-list');
       list.innerHTML = '';
+
+      // Completed tab: live view of all done tasks still in plannerData
+      if (activeBinSubtab === 'completed') {
+        const all = loadAll();
+        const items = [];
+        Object.keys(all).sort().forEach(dateKey => {
+          (all[dateKey].tasks || []).filter(t => t.done).forEach(t => items.push({ ...t, date: dateKey }));
+        });
+        if (!items.length) { list.innerHTML = '<p class="empty-state" style="padding:20px 0">No completed tasks — tick a task to see it here.</p>'; return; }
+        document.getElementById('bin-clear-selected').innerHTML = 'Clear selected &#128465;';
+        items.reverse().forEach(item => {
+          const card = document.createElement('div'); card.className = 'card'; card.style.marginBottom = '10px';
+          const d = new Date(item.date + 'T00:00:00');
+          const meta = document.createElement('div'); meta.className = 'bin-item-meta';
+          meta.textContent = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+          const badge = document.createElement('span');
+          const p = item.priority || 'normal';
+          badge.className = `priority-badge p-${p}`; badge.textContent = p === 'normal' ? 'NORM' : p;
+          const txt = document.createElement('span'); txt.className = 'bin-item-text'; txt.style.textDecoration = 'line-through'; txt.textContent = item.text;
+          const badgeRow = document.createElement('div'); badgeRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:4px';
+          badgeRow.append(badge, txt);
+          const binItem = document.createElement('div'); binItem.className = 'bin-item'; binItem.append(meta, badgeRow);
+          const cb = document.createElement('input'); cb.type = 'checkbox'; cb.className = 'bin-checkbox'; cb.dataset.taskId = item.id;
+          const row = document.createElement('div'); row.className = 'bin-card-row'; row.append(binItem, cb);
+          card.appendChild(row); list.appendChild(card);
+        });
+        return;
+      }
+
       const bin   = loadBin();
       const items = bin[activeBinSubtab] || [];
+      document.getElementById('bin-clear-selected').innerHTML = 'Clear selected &#x1F525;';
       if (!items.length) {
         list.innerHTML = '<p class="empty-state" style="padding:20px 0">Nothing here yet.</p>';
         return;
@@ -1915,6 +1959,20 @@
 
     // ── Sunday midnight sweep ───────────────────────────────────────────────────
 
+    // Removes expired deleted items: tasks after 30 days, notes after 90 days.
+    // deletedAt resets to a fresh timestamp if an item is deleted again after reinstatement.
+    function pruneExpiredBinItems() {
+      const bin = loadBin();
+      const now = Date.now();
+      const D30 = 30 * 86400000;
+      const D90 = 90 * 86400000;
+      const expired = (item, limit) => item.deletedAt && now - new Date(item.deletedAt).getTime() >= limit;
+      const dBefore = bin.deleted.length + bin.notes.length;
+      bin.deleted = bin.deleted.filter(t => !expired(t, D30));
+      bin.notes   = bin.notes.filter(n => !expired(n, D90));
+      if (bin.deleted.length + bin.notes.length !== dBefore) saveBin(bin);
+    }
+
     function checkSundaySweep() {
       const now = new Date();
       const d = new Date(now);
@@ -1931,7 +1989,7 @@
         if (key >= todayKey) return;
         const done = all[key].tasks.filter(t => t.done);
         if (!done.length) return;
-        done.forEach(t => bin.completed.push({ ...t, date: key, addedAt: now.toISOString() }));
+        done.forEach(t => bin.deleted.push({ ...t, date: key, deletedAt: now.toISOString() }));
         all[key].tasks = all[key].tasks.filter(t => !t.done);
         changed = true;
       });
@@ -1954,15 +2012,109 @@
       renderNotesTab();
     }
 
-    document.getElementById('delete-old-notes-btn').addEventListener('click', deleteOldNotes);
+    document.getElementById('notes-select-all').addEventListener('click', () => {
+      const boxes = [...document.querySelectorAll('.note-checkbox')];
+      const all = boxes.every(c => c.checked);
+      boxes.forEach(c => c.checked = !all);
+    });
+    document.getElementById('notes-select-old').addEventListener('click', () => {
+      const todayKey = toKey(new Date());
+      document.querySelectorAll('.note-checkbox').forEach(c => { c.checked = c.dataset.key < todayKey; });
+    });
+    document.getElementById('notes-delete-selected').addEventListener('click', () => {
+      const checked = [...document.querySelectorAll('.note-checkbox:checked')];
+      if (!checked.length) { alert('No notes selected.'); return; }
+      if (!confirm(`Move ${checked.length} note(s) to the Bin? They will be kept for 90 days.`)) return;
+      const keys = checked.map(c => c.dataset.key);
+      const all  = loadAll();
+      const bin  = loadBin();
+      const ts   = new Date().toISOString();
+      keys.forEach(k => {
+        if (all[k]?.notes?.trim()) {
+          bin.notes.push({ date: k, text: all[k].notes, deletedAt: ts });
+          all[k].notes = '';
+        }
+      });
+      saveAll(all); saveBin(bin); renderNotesTab();
+    });
     document.getElementById('bin-select-all').addEventListener('click', () => {
       const boxes = [...document.querySelectorAll('.bin-checkbox')];
       const allChecked = boxes.every(c => c.checked);
       boxes.forEach(c => c.checked = !allChecked);
     });
+    document.getElementById('bin-restore-selected').addEventListener('click', () => {
+      const checked = [...document.querySelectorAll('.bin-checkbox:checked')];
+      if (!checked.length) { alert('No items selected.'); return; }
+      const todayKey = toKey(new Date());
+
+      if (activeBinSubtab === 'completed') {
+        const selectedIds = new Set(checked.map(c => Number(c.dataset.taskId)));
+        const all = loadAll();
+        const today = all[todayKey] || { tasks: [], notes: '' };
+        Object.keys(all).forEach(dateKey => {
+          const tasks = all[dateKey].tasks || [];
+          tasks.filter(t => t.done && selectedIds.has(t.id)).forEach(t => {
+            today.tasks.push({ id: Date.now() + Math.floor(Math.random()*1000), text: t.text, done: false, priority: t.priority || 'normal', due: t.due || null });
+          });
+          all[dateKey].tasks = tasks.filter(t => !(t.done && selectedIds.has(t.id)));
+        });
+        all[todayKey] = today;
+        saveAll(all); renderBinTab(); return;
+      }
+
+      if (activeBinSubtab === 'deleted') {
+        const selectedIdxs = new Set(checked.map(c => Number(c.dataset.idx)));
+        const bin = loadBin();
+        const all = loadAll();
+        const today = all[todayKey] || { tasks: [], notes: '' };
+        bin.deleted.filter((_, i) => selectedIdxs.has(i)).forEach(t => {
+          today.tasks.push({ id: Date.now() + Math.floor(Math.random()*1000), text: t.text, done: false, priority: t.priority || 'normal', due: t.due || null });
+        });
+        bin.deleted = bin.deleted.filter((_, i) => !selectedIdxs.has(i));
+        all[todayKey] = today;
+        saveAll(all); saveBin(bin); renderBinTab(); return;
+      }
+
+      if (activeBinSubtab === 'notes') {
+        const selectedIdxs = new Set(checked.map(c => Number(c.dataset.idx)));
+        const bin = loadBin();
+        const all = loadAll();
+        const errored = [];
+        const restoredIdxs = new Set();
+        bin.notes.forEach((note, i) => {
+          if (!selectedIdxs.has(i)) return;
+          if (all[note.date]?.notes?.trim()) { errored.push(note.date); return; }
+          if (!all[note.date]) all[note.date] = { tasks: [], notes: '' };
+          all[note.date].notes = note.text;
+          restoredIdxs.add(i);
+        });
+        if (errored.length) {
+          const labels = errored.map(k => new Date(k + 'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})).join(', ');
+          alert(`New notes on ${labels} already exist \u2014 those notes couldn\u2019t be restored automatically. Copy the text from the Bin and add it manually via the Notes section on the Day tab for that day.`);
+        }
+        if (restoredIdxs.size) {
+          bin.notes = bin.notes.filter((_, i) => !restoredIdxs.has(i));
+          saveAll(all); saveBin(bin);
+        }
+        renderBinTab(); return;
+      }
+    });
     document.getElementById('bin-clear-selected').addEventListener('click', () => {
       const checked = [...document.querySelectorAll('.bin-checkbox:checked')];
       if (!checked.length) { alert('No items selected.'); return; }
+      if (activeBinSubtab === 'completed') {
+        if (!confirm(`Delete ${checked.length} selected completed task(s)?\n\nNote: completed tasks from past days are also auto-cleared every Sunday at midnight.`)) return;
+        const selectedIds = new Set(checked.map(c => Number(c.dataset.taskId)));
+        const all = loadAll();
+        const bin = loadBin();
+        const ts  = new Date().toISOString();
+        Object.keys(all).forEach(dateKey => {
+          const tasks = all[dateKey].tasks || [];
+          tasks.filter(t => t.done && selectedIds.has(t.id)).forEach(t => bin.deleted.push({ ...t, date: dateKey, deletedAt: ts }));
+          all[dateKey].tasks = tasks.filter(t => !(t.done && selectedIds.has(t.id)));
+        });
+        saveAll(all); saveBin(bin); renderBinTab(); return;
+      }
       if (!confirm(`Permanently delete ${checked.length} selected item(s)?\n\nThis cannot be undone.`)) return;
       const selected = new Set(checked.map(c => Number(c.dataset.idx)));
       const bin = loadBin();
