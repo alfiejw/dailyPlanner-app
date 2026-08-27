@@ -57,6 +57,25 @@
       font-weight: 700;
       letter-spacing: 0.02em;
       line-height: 1.1;
+      position: relative;
+      display: inline-block;
+    }
+
+    .title-logo {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-71%, -75%) rotate(-15deg); /* rotation: change 0deg to rotate logo */
+      height: 1.6em;
+      width: auto;
+      filter: invert(1);
+      mix-blend-mode: screen;
+    }
+    .title-sep {
+      display: inline-block;
+      width: 0;
+      position: relative;
+      overflow: visible;
     }
 
     .app-header h1 .word-board { color: rgba(255,255,255,0.72); }
@@ -754,6 +773,7 @@
     .week-tbl td.c-light { background:var(--bg); color:#3a3248; }
     .week-tbl td.c-dark  { background:#ead8f4; color:#3a3248; }
     .week-task { display:flex; flex-direction:column; gap:3px; margin-bottom:6px; font-size:0.82rem; line-height:1.3; }
+    .week-task-time { font-size:0.75rem; font-weight:700; text-align:center; opacity:0.85; }
     .week-task-text { font-weight:600; color:var(--text); }
     .week-task-top { display:flex; align-items:center; justify-content:center; gap:4px; }
     .week-badge { font-size:0.82rem; font-weight:700; text-transform:uppercase; padding:2px 6px; border-radius:6px; flex-shrink:0; }
@@ -768,7 +788,7 @@
 <body>
 
   <header class="app-header">
-    <h1>Jess<span class="word-board">Board</span></h1>
+    <h1>Jess<span style="display:inline-block;width:0.45em"></span><span class="title-sep"><img src="icons/JessBoard_logo_3.png" alt="" class="title-logo" aria-hidden="true" /></span><span class="word-board">Board</span></h1>
     <div class="date-display" id="full-date"></div>
   </header>
 
@@ -1657,7 +1677,7 @@
       });
       for (let i = 0; i < 8; i++) cols[i].sort((a, b) => (a.due || '').localeCompare(b.due || ''));
 
-      const maxCols   = Math.max(1, ...cols.map(c => c.length));
+      const maxCols   = Math.max(3, ...cols.map(c => c.length));
       const container = document.getElementById('week-table-inner');
       container.innerHTML = '';
 
@@ -1681,7 +1701,9 @@
           th.textContent = `${DAY_NAMES[row]} - ${weekDays[row].getDate()} - ${weekDays[row].toLocaleDateString('en-GB',{month:'short'})}`;
           th.style.cursor = 'pointer';
           th.title = 'Open in Day tab';
-          if (toKey(weekDays[row]) === toKey(now)) th.style.background = '#7050a8';
+          const rowKey = toKey(weekDays[row]);
+          if (rowKey === toKey(now))      th.style.background = '#7050a8';
+          else if (rowKey < toKey(now))   th.style.background = 'var(--primary)';
           th.addEventListener('click', () => {
             currentDate = new Date(weekDays[row]);
             document.querySelectorAll('.tab').forEach(t => {
@@ -1715,7 +1737,14 @@
             if (iR) top.appendChild(iR);
             const tx = document.createElement('span'); tx.className = 'week-task-text'; tx.textContent = task.text;
             if (task.done) tx.style.textDecoration = 'line-through';
-            te.append(top, tx); td.appendChild(te);
+            if (task.due) {
+              const timeEl = document.createElement('div'); timeEl.className = 'week-task-time';
+              timeEl.textContent = formatDueTime(task.due);
+              te.append(timeEl, top, tx);
+            } else {
+              te.append(top, tx);
+            }
+            td.appendChild(te);
           }
           tr.appendChild(td);
         }
@@ -1812,10 +1841,9 @@
         const txt = document.createElement('p');    txt.className = 'note-card-text';
         txt.textContent = all[key].notes;
 
-        header.append(dateEl, editBtn);
         const cb = document.createElement('input'); cb.type='checkbox'; cb.className='note-checkbox'; cb.dataset.key=key;
         const actions = document.createElement('div'); actions.style.cssText='display:flex;align-items:center;gap:8px'; actions.append(editBtn, cb);
-        header.replaceChild(actions, editBtn);
+        header.append(dateEl, actions);
         card.append(header, hr, txt);
         list.appendChild(card);
       });
@@ -1851,7 +1879,7 @@
     document.getElementById('note-edit-save').addEventListener('click', saveNoteEdit);
     document.getElementById('note-edit-cancel').addEventListener('click', closeNoteEditor);
     document.getElementById('note-edit-delete').addEventListener('click', () => {
-      if (!confirm('Delete this note? This cannot be undone.')) return;
+      if (!confirm('Delete this note? It will be kept for 90 days.')) return;
       if (!editingNoteKey) return;
       const all = loadAll();
       if (all[editingNoteKey]?.notes?.trim()) {
@@ -1898,8 +1926,9 @@
           const badgeRow = document.createElement('div'); badgeRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:4px';
           badgeRow.append(badge, txt);
           const binItem = document.createElement('div'); binItem.className = 'bin-item'; binItem.append(meta, badgeRow);
+          const content = document.createElement('div'); content.className = 'bin-card-content'; content.appendChild(binItem);
           const cb = document.createElement('input'); cb.type = 'checkbox'; cb.className = 'bin-checkbox'; cb.dataset.taskId = item.id;
-          const row = document.createElement('div'); row.className = 'bin-card-row'; row.append(binItem, cb);
+          const row = document.createElement('div'); row.className = 'bin-card-row'; row.append(content, cb);
           card.appendChild(row); list.appendChild(card);
         });
         return;
@@ -2059,7 +2088,7 @@
           all[dateKey].tasks = tasks.filter(t => !(t.done && selectedIds.has(t.id)));
         });
         all[todayKey] = today;
-        saveAll(all); renderBinTab(); return;
+        saveAll(all); renderBinTab(); render(); return;
       }
 
       if (activeBinSubtab === 'deleted') {
@@ -2072,7 +2101,7 @@
         });
         bin.deleted = bin.deleted.filter((_, i) => !selectedIdxs.has(i));
         all[todayKey] = today;
-        saveAll(all); saveBin(bin); renderBinTab(); return;
+        saveAll(all); saveBin(bin); renderBinTab(); render(); return;
       }
 
       if (activeBinSubtab === 'notes') {
@@ -2090,7 +2119,7 @@
         });
         if (errored.length) {
           const labels = errored.map(k => new Date(k + 'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})).join(', ');
-          alert(`New notes on ${labels} already exist \u2014 those notes couldn\u2019t be restored automatically. Copy the text from the Bin and add it manually via the Notes section on the Day tab for that day.`);
+          alert(`New notes on ${labels} already exist \u2014 these notes therefore couldn\u2019t be restored automatically. \n\nCopy the note text from here and add it to the day notes manually.`);
         }
         if (restoredIdxs.size) {
           bin.notes = bin.notes.filter((_, i) => !restoredIdxs.has(i));
