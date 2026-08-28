@@ -65,7 +65,7 @@
       position: absolute;
       left: 50%;
       top: 50%;
-      transform: translate(-71%, -75%) rotate(-15deg); /* rotation: change 0deg to rotate logo */
+      transform: translate(-71%, -78%) rotate(-15deg); /* rotation: change 0deg to rotate logo */
       height: 1.6em;
       width: auto;
       filter: invert(1);
@@ -730,6 +730,25 @@
     .bin-item-text { font-size: 0.88rem; color: var(--text); white-space: pre-wrap; word-break: break-word; }
 
     .bin-item { display: flex; flex-direction: column; gap: 3px; }
+    .search-bar {
+      width: 100%;
+      border: 2px solid var(--primary);
+      border-radius: 9999px;
+      padding: 8px 18px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      background: #fce8f4;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .search-bar:focus { border-color: var(--primary-dark); }
+    .search-bar::placeholder { color: var(--text-muted); font-weight: 400; }
+    .search-bar::-webkit-search-cancel-button {
+      filter: grayscale(1) brightness(0.45);
+    }
     .backup-actions {
       display: flex;
       justify-content: center;
@@ -907,6 +926,9 @@
         <button class="today-btn" id="week-go-current" style="line-height:1.2">This<br>Week</button>
       </div>
     </nav>
+    <div style="flex-shrink:0;padding:6px 14px 4px">
+      <input type="search" class="search-bar" id="week-search" placeholder="Search tasks…" />
+    </div>
     <div class="week-scroll-area" id="week-scroll">
       <div id="week-table-inner"></div>
     </div>
@@ -923,6 +945,7 @@
         </div>
       </div>
       <div style="height:3px;background:var(--primary);border-radius:2px"></div>
+      <input type="search" class="search-bar" id="notes-search" placeholder="Search notes…" style="margin-top:8px" />
     </div>
     <div class="panel-scroll" style="padding:0 14px 20px">
       <div id="notes-list"></div>
@@ -935,6 +958,9 @@
         <button class="bin-subtab active" data-bin="completed">Completed<span class="bin-subtab-desc">Completed tasks, deleted every Sunday.</span></button>
         <button class="bin-subtab"        data-bin="deleted">Deleted<span class="bin-subtab-desc">Deleted tasks, kept 30 days.</span></button>
         <button class="bin-subtab"        data-bin="notes">Notes<span class="bin-subtab-desc">Deleted notes, kept 90 days.</span></button>
+      </div>
+      <div style="padding:6px 14px 4px">
+        <input type="search" class="search-bar" id="bin-search" placeholder="Search…" />
       </div>
       <div style="display:flex;justify-content:flex-end;gap:6px;padding:4px 14px 0">
         <button class="btn-ghost" id="bin-select-all">Select all &#9745;</button>
@@ -1676,6 +1702,9 @@
         });
       });
       for (let i = 0; i < 8; i++) cols[i].sort((a, b) => (a.due || '').localeCompare(b.due || ''));
+      if (weekSearchTerm) {
+        for (let i = 0; i < 8; i++) cols[i] = cols[i].filter(t => fuzzyMatch(weekSearchTerm, t.text));
+      }
 
       const maxCols   = Math.max(3, ...cols.map(c => c.length));
       const container = document.getElementById('week-table-inner');
@@ -1790,6 +1819,7 @@
 
       const days = Object.keys(all)
         .filter(k => all[k].notes?.trim())
+        .filter(k => !notesSearchTerm || fuzzyMatch(notesSearchTerm, all[k].notes))
         .sort(); // ISO keys sort chronologically
 
       if (!days.length) {
@@ -1879,7 +1909,34 @@
 
     // ── Bin tab ───────────────────────────────────────────────────────────────
 
-    let activeBinSubtab = 'completed';
+    let activeBinSubtab  = 'completed';
+    let notesSearchTerm  = '';
+    let binSearchTerm    = '';
+    let weekSearchTerm   = '';
+
+    function levenshtein(a, b) {
+      const m = a.length, n = b.length;
+      const dp = Array.from({length: m+1}, (_, i) => { const r = [i]; for (let j=1;j<=n;j++) r.push(j); return r; });
+      for (let i=1;i<=m;i++) for (let j=1;j<=n;j++)
+        dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+      return dp[m][n];
+    }
+
+    function fuzzyMatch(query, text) {
+      if (!query) return true;
+      query = query.toLowerCase(); text = text.toLowerCase();
+      if (text.includes(query)) return true;   // exact substring
+      if (query.includes(text)) return true;   // text inside query
+      const qLen = query.length, tLen = text.length;
+      if (qLen <= 1 || tLen <= 1) return false;
+      // Similar length: full levenshtein allows 1 edit (covers 1-char typo in query)
+      if (tLen <= qLen + 1) return levenshtein(query, text) <= 1;
+      // Much longer text: scan windows same length as query for 1-edit match
+      for (let i = 0; i <= tLen - qLen; i++) {
+        if (levenshtein(query, text.substring(i, i + qLen)) <= 1) return true;
+      }
+      return false;
+    }
 
     function renderBinTab(sub) {
       if (sub) activeBinSubtab = sub;
@@ -1892,10 +1949,11 @@
       // Completed tab: live view of all done tasks still in plannerData
       if (activeBinSubtab === 'completed') {
         const all = loadAll();
-        const items = [];
+        let items = [];
         Object.keys(all).sort().forEach(dateKey => {
           (all[dateKey].tasks || []).filter(t => t.done).forEach(t => items.push({ ...t, date: dateKey }));
         });
+        if (binSearchTerm) items = items.filter(t => fuzzyMatch(binSearchTerm, t.text));
         if (!items.length) { list.innerHTML = '<p class="empty-state" style="padding:20px 0">No completed tasks — tick a task to see it here.</p>'; return; }
         document.getElementById('bin-clear-selected').innerHTML = 'Clear selected &#128465;';
         items.reverse().forEach(item => {
@@ -1919,7 +1977,8 @@
       }
 
       const bin   = loadBin();
-      const items = bin[activeBinSubtab] || [];
+      let items = bin[activeBinSubtab] || [];
+      if (binSearchTerm) items = items.filter(t => fuzzyMatch(binSearchTerm, t.text || t.notes || ''));
       document.getElementById('bin-clear-selected').innerHTML = 'Clear selected &#x1F525;';
       if (!items.length) {
         list.innerHTML = '<p class="empty-state" style="padding:20px 0">Nothing here yet.</p>';
@@ -2137,6 +2196,16 @@
     });
     document.querySelectorAll('.bin-subtab').forEach(b => {
       b.addEventListener('click', () => renderBinTab(b.dataset.bin));
+    });
+
+    document.getElementById('notes-search').addEventListener('input', e => {
+      notesSearchTerm = e.target.value.trim(); renderNotesTab();
+    });
+    document.getElementById('bin-search').addEventListener('input', e => {
+      binSearchTerm = e.target.value.trim(); renderBinTab();
+    });
+    document.getElementById('week-search').addEventListener('input', e => {
+      weekSearchTerm = e.target.value.trim(); renderWeekTab();
     });
 
     // ── Network status ────────────────────────────────────────────────────────
