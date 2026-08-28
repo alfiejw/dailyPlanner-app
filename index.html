@@ -512,13 +512,13 @@
       cursor: pointer;
       padding: 2px 4px;
       border-radius: 4px;
-      opacity: 0.6;
+      opacity: 0.85;
       transition: opacity 0.15s;
       flex-shrink: 0;
       line-height: 1;
     }
     .btn-edit:hover { opacity: 1; }
-    .btn-edit-icon { display: inline-block; font-size: 1rem; transform: scaleX(-1); }
+    .btn-edit-icon { display: inline-block; font-size: 1.2rem; transform: scaleX(-1); color: #9878b8; }
 
     /* ── Edit modal ────────────────────────────────────────────── */
     .modal-overlay {
@@ -765,8 +765,7 @@
       .day-label { min-width: 100px; font-size: 0.9rem; }
       .composer select { display: none; }
     }
-    .week-scroll-area { overflow:auto; cursor:grab; touch-action:none; user-select:none; height:calc(100vh - 260px); margin:8px 14px 0; border-radius:var(--radius); }
-    .week-scroll-area.dragging { cursor:grabbing; }
+    .week-scroll-area { overflow:auto; -webkit-overflow-scrolling:touch; height:calc(100vh - 260px); margin:8px 14px 0; border-radius:var(--radius); }
     .week-tbl { border-collapse:collapse; table-layout:fixed; }
     .week-tbl th { position:sticky; left:0; z-index:3; width:36px; min-width:36px; padding:10px 4px; background:var(--secondary); color:#fff; font-family:inherit; font-size:0.68rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; text-align:center; white-space:nowrap; writing-mode:vertical-lr; transform:rotate(180deg); border-right:1px solid rgba(255,255,255,0.12); }
     .week-tbl td { width:136px; min-width:136px; height:136px; min-height:136px; padding:7px 6px; vertical-align:top; word-break:break-word; border-right:1px solid rgba(0,0,0,0.04); border-bottom:1px solid rgba(0,0,0,0.04); }
@@ -953,6 +952,7 @@
       <div class="content" style="padding-top:14px">
         <div class="card">
           <div class="card-title">Data Backup</div>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px">Export/Import local task data to/from this device for backup.</p>
           <div class="backup-actions">
             <button class="btn-backup" id="export-btn">Export backup &#9660;</button>
             <input type="file" id="import-input" accept=".json" style="display:none" />
@@ -1754,26 +1754,7 @@
       container.appendChild(tbl);
     }
 
-    // Drag-to-pan week scroll area (pointer capture keeps events on element)
-    (function() {
-      const el = document.getElementById('week-scroll');
-      let active = false, sx, sy, sl, st;
-      el.addEventListener('pointerdown', e => {
-        active = true; sx = e.clientX; sy = e.clientY;
-        sl = el.scrollLeft; st = el.scrollTop;
-        el.setPointerCapture(e.pointerId);
-        el.classList.add('dragging');
-        e.preventDefault();
-      });
-      el.addEventListener('pointermove', e => {
-        if (!active) return;
-        el.scrollLeft = sl - (e.clientX - sx);
-        el.scrollTop  = st - (e.clientY - sy);
-      });
-      const end = () => { active = false; el.classList.remove('dragging'); };
-      el.addEventListener('pointerup', end);
-      el.addEventListener('pointercancel', end);
-    })();
+    // Week scroll uses native CSS momentum scroll — no custom drag handler needed
 
     document.getElementById('week-prev').addEventListener('click', () => {
       currentWeekStart = new Date(currentWeekStart);
@@ -1842,7 +1823,7 @@
         txt.textContent = all[key].notes;
 
         const cb = document.createElement('input'); cb.type='checkbox'; cb.className='note-checkbox'; cb.dataset.key=key;
-        const actions = document.createElement('div'); actions.style.cssText='display:flex;align-items:center;gap:8px'; actions.append(editBtn, cb);
+        const actions = document.createElement('div'); actions.style.cssText='display:flex;align-items:center;gap:16px'; editBtn.style.cssText='font-size:1.4rem;display:flex;align-items:center;'; actions.append(editBtn, cb);
         header.append(dateEl, actions);
         card.append(header, hr, txt);
         list.appendChild(card);
@@ -1872,6 +1853,9 @@
       if (!all[editingNoteKey]) all[editingNoteKey] = { tasks: [], notes: '' };
       all[editingNoteKey].notes = document.getElementById('note-edit-input').value;
       saveAll(all);
+      if (editingNoteKey === toKey(currentDate)) {
+        document.getElementById('notes-input').value = all[editingNoteKey].notes;
+      }
       closeNoteEditor();
       renderNotesTab();
     }
